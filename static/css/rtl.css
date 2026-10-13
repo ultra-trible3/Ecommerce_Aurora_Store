@@ -1,0 +1,218 @@
+/* ==========================================================================
+   RTL (Arabic) layout support — Aurora Store
+   Loaded only when the active language is RTL.
+   ========================================================================== */
+
+/* Base ------------------------------------------------------------------- */
+[dir="rtl"] { direction: rtl; text-align: right; }
+
+/* Modern Arabic UI font: Latin from Inter, Arabic from Cairo -------------- */
+[dir="rtl"] body,
+[dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6,
+[dir="rtl"] .h1, [dir="rtl"] .h2, [dir="rtl"] .h3, [dir="rtl"] .h4, [dir="rtl"] .h5, [dir="rtl"] .h6,
+[dir="rtl"] .au-nav-link,
+[dir="rtl"] .au-subnav-link,
+[dir="rtl"] .btn,
+[dir="rtl"] .form-control,
+[dir="rtl"] .form-select,
+[dir="rtl"] .au-brand,
+[dir="rtl"] .au-product .title,
+[dir="rtl"] .au-footer,
+[dir="rtl"] .au-section-head p,
+[dir="rtl"] .au-hero .lead,
+[dir="rtl"] .au-empty p,
+[dir="rtl"] .au-testimonial p,
+[dir="rtl"] .au-alert,
+[dir="rtl"] .toast-body {
+  font-family: 'Inter', 'Cairo', 'Noto Sans Arabic', system-ui, -apple-system, sans-serif;
+}
+
+/* Header / Topbar -------------------------------------------------------- */
+[dir="rtl"] .au-brand { white-space: nowrap; flex-shrink: 0; flex-wrap: nowrap; }
+[dir="rtl"] .au-brand .brand-logo { order: 1; }
+[dir="rtl"] .au-brand .brand-text { order: 2; }
+
+/* Navbar: force single-line layout in RTL */
+[dir="rtl"] .au-navbar { flex-wrap: nowrap !important; }
+[dir="rtl"] .navbar-collapse { flex-grow: 0 !important; }
+[dir="rtl"] .au-actions { flex-wrap: nowrap !important; }
+[dir="rtl"] .au-search { flex-wrap: nowrap !important; }
+
+/* Search: mirror button to left, swap input padding */
+[dir="rtl"] .au-search .au-search-btn { right: auto; left: 5px; }
+[dir="rtl"] .au-search input { padding: 0 1.1rem 0 3rem; }
+[dir="rtl"] .au-search .au-search-btn:hover { background: var(--au-primary-hover); }
+
+/* Suggestions: price on left (was auto margin-left) */
+[dir="rtl"] .au-suggest .price { margin-left: 0; margin-right: auto; }
+
+/* Badge counts on action icons */
+[dir="rtl"] .au-badge-count { right: auto; left: -6px; }
+
+/* Remove harmful row-reverse hacks; natural flex mirroring is correct */
+[dir="rtl"] .au-topbar > div > div:first-child,
+[dir="rtl"] .au-topbar > div > div:last-child,
+[dir="rtl"] .au-actions { flex-direction: row; }
+
+/* Dropdowns: plain opens at start (right), end opens at end (left) */
+[dir="rtl"] .dropdown-menu[data-bs-popper] { left: auto; right: 0; }
+[dir="rtl"] .dropdown-menu-end[data-bs-popper] { right: auto; left: 0; }
+
+/* Breadcrumbs: bidi isolation + chevron rotation */
+[dir="rtl"] .au-breadcrumbs > * { unicode-bidi: isolate; }
+[dir="rtl"] .au-breadcrumbs .bi { transform: rotate(180deg); }
+
+/* Product cards ---------------------------------------------------------- */
+[dir="rtl"] .au-product .flags { left: auto; right: .65rem; }
+
+[dir="rtl"] .au-product .quick { right: auto; left: .7rem; transform: translateX(-8px); }
+[dir="rtl"] .au-product:hover .quick { transform: none; }
+@media (hover: none) {
+  [dir="rtl"] .au-product .quick { opacity: 1; transform: none; }
+}
+
+/* Forms ------------------------------------------------------------------ */
+[dir="rtl"] .form-select {
+  background-position: left .75rem center;
+  padding-left: 2.2rem; padding-right: .75rem;
+}
+
+/* Sidebar filter: push count to far left (end) */
+[dir="rtl"] .au-sidebar .check .count { margin-left: 0; margin-right: auto; }
+
+/* Checkout / account steps ---------------------------------------------- */
+[dir="rtl"] .au-steps li::after { left: auto; right: calc(-50% + 14px); }
+[dir="rtl"] .au-timeline li { padding: 0 2.4rem 1.6rem 0; }
+[dir="rtl"] .au-timeline li::before { left: auto; right: 8px; }
+[dir="rtl"] .au-timeline li::after { left: auto; right: 14.5px; }
+
+/* Address badge corner */
+[dir="rtl"] .au-address .badge-corner { right: auto; left: .8rem; }
+
+/* Footer ----------------------------------------------------------------- */
+[dir="rtl"] .au-footer a:hover { transform: translateX(-3px); }
+[dir="rtl"] .au-social a { margin-right: 0; margin-left: .4rem; }
+
+/* Offcanvas (mobile nav) ------------------------------------------------- */
+[dir="rtl"] .offcanvas-end {
+  left: 0; right: auto;
+  transform: translateX(-100%);
+}
+[dir="rtl"] .offcanvas-end.show,
+[dir="rtl"] .offcanvas-end.showing { transform: none; }
+[dir="rtl"] .offcanvas-header .btn-close { margin-right: auto; margin-left: 0; }
+
+/* Modal ------------------------------------------------------------------ */
+[dir="rtl"] .modal-header .btn-close { margin-right: auto; margin-left: 0; }
+
+/* Toast ------------------------------------------------------------------ */
+[dir="rtl"] .toast-container.end-0 { right: auto !important; left: 0 !important; }
+
+/* Bootstrap utilities: flip physical margins for icon gaps & auto push ----- */
+[dir="rtl"] .me-1  { margin-right: 0 !important; margin-left: .25rem !important; }
+[dir="rtl"] .me-2  { margin-right: 0 !important; margin-left: .5rem !important; }
+[dir="rtl"] .me-3  { margin-right: 0 !important; margin-left: 1rem !important; }
+[dir="rtl"] .ms-1  { margin-left: 0 !important; margin-right: .25rem !important; }
+[dir="rtl"] .ms-2  { margin-left: 0 !important; margin-right: .5rem !important; }
+[dir="rtl"] .ms-auto { margin-left: 0 !important; margin-right: auto !important; }
+[dir="rtl"] .me-auto { margin-right: 0 !important; margin-left: auto !important; }
+
+/* Text alignment utilities ----------------------------------------------- */
+[dir="rtl"] .text-end   { text-align: left !important; }
+[dir="rtl"] .text-start { text-align: right !important; }
+
+/* Padding utility used in product detail feature lists */
+[dir="rtl"] .ps-3 { padding-left: 0 !important; padding-right: 1rem !important; }
+
+/* Bidi helpers for mixed English/Arabic content ------------------------- */
+[dir="rtl"] .au-eyebrow,
+[dir="rtl"] .au-chip,
+[dir="rtl"] .au-flag,
+[dir="rtl"] .au-status,
+[dir="rtl"] .au-badge-count,
+[dir="rtl"] .code {
+  unicode-bidi: isolate;
+}
+[dir="rtl"] h1, [dir="rtl"] h2, [dir="rtl"] h3, [dir="rtl"] h4, [dir="rtl"] h5, [dir="rtl"] h6,
+[dir="rtl"] .h1, [dir="rtl"] .h2, [dir="rtl"] .h3, [dir="rtl"] .h4, [dir="rtl"] .h5, [dir="rtl"] .h6,
+[dir="rtl"] p,
+[dir="rtl"] .au-section-head p,
+[dir="rtl"] .au-hero .lead,
+[dir="rtl"] .au-empty p,
+[dir="rtl"] .au-testimonial p,
+[dir="rtl"] .au-toast .toast-body,
+[dir="rtl"] .au-alert {
+  unicode-bidi: plaintext;
+}
+
+/* Icon directional flips ------------------------------------------------- */
+[dir="rtl"] .bi-chevron-right,
+[dir="rtl"] .bi-chevron-double-right,
+[dir="rtl"] .bi-arrow-right,
+[dir="rtl"] .bi-arrow-right-short,
+[dir="rtl"] .bi-caret-right {
+  transform: rotate(180deg);
+}
+[dir="rtl"] .bi-chevron-left,
+[dir="rtl"] .bi-chevron-double-left,
+[dir="rtl"] .bi-arrow-left,
+[dir="rtl"] .bi-arrow-left-short,
+[dir="rtl"] .bi-caret-left {
+  transform: rotate(180deg);
+}
+
+/* Table alignment (inherit from base text-align right) */
+[dir="rtl"] .table th,
+[dir="rtl"] .table td { text-align: right; }
+
+/* Hero Banner RTL -------------------------------------------------------- */
+[dir="rtl"] .au-hero-banner .banner-close-btn { right: auto; left: 16px; }
+[dir="rtl"] .au-hero-banner .au-eyebrow { margin-left: auto; margin-right: 0; }
+[dir="rtl"] .au-hero-banner .btn-text i { transform: rotate(180deg); }
+
+/* Hero Slider RTL -------------------------------------------------------- */
+[dir="rtl"] .au-slide-overlay { transform: scaleX(-1); }
+[dir="rtl"] .au-slide-content.align-left {
+  margin-right: 0;
+  margin-left: auto;
+  text-align: right;
+  align-items: flex-end;
+}
+[dir="rtl"] .au-slide-content.align-right {
+  margin-left: 0;
+  margin-right: auto;
+  text-align: left;
+  align-items: flex-start;
+}
+[dir="rtl"] .au-slide-content:hover .au-slide-headline i {
+  transform: translateX(-6px) rotate(180deg);
+}
+[dir="rtl"] .au-slide-prev { left: auto; right: 18px; }
+[dir="rtl"] .au-slide-next { right: auto; left: 18px; }
+
+/* Deal popup RTL --------------------------------------------------------- */
+/* Close button intentionally stays in the top-right corner (spec) */
+[dir="rtl"] .deal-promo-btn:hover i { transform: translateX(-4px) rotate(180deg); }
+/* Compare products RTL ------------------------------------------------------ */
+[dir="rtl"] .au-compare tbody th[scope="row"] {
+  left: auto; right: 0;
+  border-right: 0; border-left: 1px solid var(--au-border-soft);
+}
+[dir="rtl"] .au-compare-remove { right: auto; left: 0; }
+
+/* Product lightbox RTL ------------------------------------------------------ */
+[dir="rtl"] .au-lightbox-nav.prev { right: 12px; left: auto; }
+[dir="rtl"] .au-lightbox-nav.next { left: 12px; right: auto; }
+[dir="rtl"] .au-lightbox-nav.prev i { transform: scaleX(-1); }
+[dir="rtl"] .au-lightbox-nav.next i { transform: scaleX(-1); }
+@media (max-width: 575.98px) {
+  [dir="rtl"] .au-lightbox-nav.prev { right: 4px; }
+  [dir="rtl"] .au-lightbox-nav.next { left: 4px; }
+}
+
+/* Narrow screens: the header action row wraps onto its own line (see
+   main.css). The desktop-side nowrap exclusions must not fight it. */
+@media (max-width: 991.98px) {
+  [dir="rtl"] .au-navbar { flex-wrap: wrap !important; }
+  [dir="rtl"] .au-header-actions { margin-inline-start: 0; }
+}

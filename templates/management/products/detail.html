@@ -1,0 +1,202 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:products' %}"><i class="bi bi-arrow-left"></i> {% trans "Products" %}</a>
+    <h1 class="mg-title mt-1">{{ product.name }}</h1>
+    <p class="mg-sub mb-0">{{ product.sku }} · {{ product.category.full_name }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="mg-btn mg-btn-ghost" href="{{ product.get_absolute_url }}" target="_blank">
+      <i class="bi bi-eye"></i> {% trans "View" %}
+    </a>
+    <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:product_edit' product.pk %}">
+      <i class="bi bi-pencil"></i> {% trans "Edit" %}
+    </a>
+    <form method="post" action="{% url 'dashboard:product_archive' product.pk %}"
+          data-confirm="{% blocktrans with name=product.name %}Toggle visibility of {{ name }}?{% endblocktrans %}">
+      {% csrf_token %}
+      <button class="mg-btn {% if product.status == 'active' %}mg-btn-danger{% else %}mg-btn-ghost{% endif %}" type="submit">
+        {% if product.status == 'active' %}{% trans "Archive" %}{% else %}{% trans "Activate" %}{% endif %}
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="mg-card mb-3">
+      <div class="mg-card-body">
+        <div class="d-flex gap-4 flex-wrap">
+          <div style="width:210px">
+            <div style="aspect-ratio:1;border-radius:14px;overflow:hidden;background:#e7ddcb;display:grid;place-items:center">
+              {% if product.main_image %}
+                <img src="{{ product.main_image.url }}" alt="{{ product.name }}" style="width:100%;height:100%;object-fit:cover">
+              {% else %}
+                <i class="bi bi-image text-secondary" style="font-size:34px"></i>
+              {% endif %}
+            </div>
+          </div>
+          <div style="min-width:240px;flex:1">
+            <div class="d-flex gap-2 mb-3 flex-wrap">
+              <span class="mg-chip {% if product.status == 'active' %}approved{% else %}neutral{% endif %}">{{ product.get_status_display }}</span>
+              <span class="mg-chip {% if product.stock_status == 'in' %}in{% elif product.stock_status == 'low' %}low{% else %}out{% endif %}">
+                {% blocktrans with qty=product.stock_quantity %}{{ qty }} in stock{% endblocktrans %}
+              </span>
+              {% if product.is_on_sale %}
+                <span class="mg-chip pending">{% blocktrans with percent=product.discount_percent %}On sale −{{ percent }}%{% endblocktrans %}</span>
+              {% endif %}
+              {% if product.is_featured %}<span class="mg-chip neutral">{% trans "Featured" %}</span>{% endif %}
+            </div>
+
+            <div class="d-flex align-items-end gap-4 flex-wrap mb-3">
+              <div>
+                <div class="text-muted" style="font-size:12px">{% trans "Selling price" %}</div>
+                <div style="font-size:26px;font-weight:800">{{ product.current_price|currency }}</div>
+              </div>
+              {% if product.is_on_sale %}
+                <div>
+                  <div class="text-muted" style="font-size:12px">{% trans "Regular" %}</div>
+                  <div class="text-muted text-decoration-line-through">{{ product.price|currency }}</div>
+                </div>
+              {% endif %}
+              {% if product.cost_price %}
+                <div>
+                  <div class="text-muted" style="font-size:12px">{% trans "Cost" %}</div>
+                  <div class="fw-bold">{{ product.cost_price|currency }}</div>
+                </div>
+              {% endif %}
+            </div>
+
+            <p class="text-muted mb-3">{{ product.short_description|default:"No description yet." }}</p>
+
+            <div class="d-flex gap-4 flex-wrap" style="font-size:13.5px">
+              <span><i class="bi bi-eye-fill text-primary"></i> {% blocktrans with num=product.view_count %}{{ num }} views{% endblocktrans %}</span>
+              <span><i class="bi bi-bag-check text-primary"></i> {% blocktrans with num=product.sold_count %}{{ num }} sold{% endblocktrans %}</span>
+              <span><i class="bi bi-star-fill text-warning"></i> {% blocktrans with avg=product.rating_average total=product.rating_count %}{{ avg }} ({{ total }}){% endblocktrans %}</span>
+              <span><i class="bi bi-bookmark text-primary"></i> {{ product.brand.name|default:"No brand" }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mg-card mb-3">
+      <div class="mg-card-head"><h5>{% trans "Stock movements" %}</h5></div>
+      <div class="table-responsive">
+        <table class="mg-table">
+          <thead>
+            <tr><th>{% trans "When" %}</th><th>{% trans "Type" %}</th><th>{% trans "Qty" %}</th><th>{% trans "After" %}</th><th>{% trans "Reference" %}</th><th>{% trans "By" %}</th></tr>
+          </thead>
+          <tbody>
+            {% for m in movements %}
+              <tr>
+                <td class="text-muted">{{ m.created_at|date:"M j, g:i A" }}</td>
+                <td><span class="mg-chip neutral">{{ m.get_transaction_type_display }}</span></td>
+                <td class="{% if m.quantity < 0 %}text-danger{% else %}text-success{% endif %} fw-semibold">
+                  {{ m.quantity }}
+                </td>
+                <td>{{ m.stock_after }}</td>
+                <td class="text-muted">{{ m.reference|default:"—" }}</td>
+                <td class="text-muted">{{ m.created_by.email|default:"system" }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6"><div class="mg-empty py-3">{% trans "No stock movements yet." %}</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mg-card">
+      <div class="mg-card-head">
+        <h5>{% trans "Recent reviews" %}</h5>
+        <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:reviews' %}?status=">{% trans "All reviews" %}</a>
+      </div>
+      <div class="mg-card-body">
+        {% for review in reviews %}
+          <div class="mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+            <div class="d-flex justify-content-between gap-2">
+              <b>{{ review.title|default:review.user.email }}</b>
+              <span class="mg-chip {% if review.status == 'approved' %}approved{% elif review.status == 'pending' %}pending{% else %}rejected{% endif %}">
+                {{ review.get_status_display }}
+              </span>
+            </div>
+            <div class="text-warning" style="font-size:12px">
+              {% for _ in "12345"|make_list %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+            </div>
+            <p class="mb-1" style="font-size:14px">{{ review.body|truncatechars:220 }}</p>
+            <span class="text-muted" style="font-size:12.5px">{{ review.user.email }} · {{ review.created_at|date:"M j" }}</span>
+          </div>
+        {% empty %}
+          <div class="mg-empty py-3"><i class="bi bi-star"></i>{% trans "No reviews yet." %}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="mg-card mb-3">
+      <div class="mg-card-head"><h5>{% trans "Quick stock" %}</h5></div>
+      <div class="mg-card-body">
+        <form method="post" action="{% url 'dashboard:inventory_adjust' %}">
+          {% csrf_token %}
+          <input type="hidden" name="product" value="{{ product.pk }}">
+          <div class="mg-field">
+            <label>{% trans "Adjustment type" %}</label>
+            <select name="transaction_type" class="form-control">
+              <option value="adjustment">{% trans "Manual adjustment" %}</option>
+              <option value="purchase">{% trans "Supplier purchase" %}</option>
+              <option value="return">{% trans "Customer return" %}</option>
+            </select>
+          </div>
+          <div class="mg-field">
+            <label>{% trans "Quantity (+ add / − remove)" %}</label>
+            <input type="number" name="quantity" value="1" required>
+          </div>
+          <div class="mg-field">
+            <label>{% trans "Note" %}</label>
+            <input type="text" name="note" placeholder="{% trans "Optional reason" %}">
+          </div>
+          <button class="mg-btn mg-btn-primary w-100" type="submit">{% trans "Apply adjustment" %}</button>
+        </form>
+      </div>
+    </div>
+
+    {% if variants %}
+      <div class="mg-card mb-3">
+        <div class="mg-card-head"><h5>{% trans "Variants" %}</h5></div>
+        <div class="table-responsive">
+          <table class="mg-table">
+            <thead><tr><th>{% trans "Option" %}</th><th>{% trans "Stock" %}</th></tr></thead>
+            <tbody>
+              {% for v in variants %}
+                <tr>
+                  <td>{% if v.color_hex %}<span class="au-swatch d-inline-block me-1" style="background:{{ v.color_hex }};vertical-align:middle"></span>{% endif %}{{ v.name }}<br><span class="text-muted" style="font-size:12px">{{ v.sku }}</span></td>
+                  <td><span class="mg-chip {% if v.is_in_stock %}in{% else %}out{% endif %}">{{ v.stock_quantity }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="mg-card">
+      <div class="mg-card-head"><h5>{% trans "Details" %}</h5></div>
+      <div class="mg-card-body" style="font-size:13.5px">
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">{% trans "Created" %}</span><span>{{ product.created_at|date:"M j, Y" }}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">{% trans "Updated" %}</span><span>{{ product.updated_at|date:"M j, Y" }}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">{% trans "Min stock" %}</span><span>{{ product.min_stock_level }}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">{% trans "Weight" %}</span><span>{{ product.weight|default:"—" }} </span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">{% trans "URL" %}</span><span class="text-truncate" style="max-width:170px">{{ product.slug }}</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

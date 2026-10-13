@@ -1,0 +1,8 @@
+Confirm your {{ SITE_NAME }} account
+
+Hi {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %},
+
+Confirm {{ user.email }} by opening:
+{{ link }}
+
+If you did not create an account, ignore this message.

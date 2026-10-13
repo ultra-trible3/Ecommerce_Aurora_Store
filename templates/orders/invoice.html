@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load i18n static core_tags %}
+
+{% block title %}{% blocktrans with number=order.order_number %}Invoice {{ number }}{% endblocktrans %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .invoice-container { max-width: 860px; margin: 0 auto; }
+  .invoice-header { background: linear-gradient(135deg, #790d16 0%, #5c0a11 100%); color: #fff; border-radius: 16px 16px 0 0; padding: 2rem 2rem 1.5rem; position: relative; overflow: hidden; }
+  .invoice-header::before { content: ""; position: absolute; top: -50%; right: -10%; width: 280px; height: 280px; background: rgba(229, 211, 175, 0.15); border-radius: 50%; }
+  .invoice-header .brand { display: flex; align-items: center; gap: 0.6rem; z-index: 1; }
+  .invoice-header .brand-logo { height: 44px; width: auto; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2)); }
+  .invoice-header .brand-text { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.03em; }
+  .invoice-meta { z-index: 1; }
+  .invoice-meta .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.8; }
+  .invoice-meta .value { font-size: 1rem; font-weight: 600; }
+  .invoice-tag { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); backdrop-filter: blur(8px); padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.85rem; font-weight: 700; letter-spacing: 0.02em; }
+  .invoice-body { background: #fff; padding: 2rem; border: 1px solid #e7ddcb; border-top: none; }
+  .invoice-section { margin-bottom: 1.5rem; }
+  .invoice-section-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: #96877e; font-weight: 700; margin-bottom: 0.4rem; }
+  .address-block { background: #f5efe1; border-radius: 10px; padding: 1rem 1.25rem; font-size: 0.88rem; line-height: 1.7; }
+  .address-name { font-weight: 700; color: #33141b; font-size: 0.95rem; margin-bottom: 0.2rem; }
+  .invoice-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .invoice-table th { background: #f5efe1; color: #4a3c36; font-weight: 600; text-transform: uppercase; font-size: 0.65rem; letter-spacing: 0.06em; padding: 0.875rem 0.75rem; border-bottom: 2px solid #e7ddcb; }
+  .invoice-table td { padding: 0.875rem 0.75rem; border-bottom: 1px solid #f0ebe0; vertical-align: middle; }
+  .invoice-table tbody tr:last-child td { border-bottom: none; }
+  .invoice-table tbody tr:hover td { background: #faf9f6; }
+  .item-name { font-weight: 500; color: #33141b; }
+  .item-sku { font-size: 0.72rem; color: #96877e; }
+  .qty-badge { background: #e5d3af; color: #790d16; font-weight: 600; padding: 0.2rem 0.55rem; border-radius: 20px; font-size: 0.75rem; display: inline-block; min-width: 2.2rem; text-align: center; }
+  .price-col { text-align: right; color: #4a3c36; font-variant-numeric: tabular-nums; }
+  .totals { margin-left: auto; width: 100%; max-width: 340px; }
+  .totals-row { display: flex; justify-content: space-between; padding: 0.45rem 0; font-size: 0.88rem; }
+  .totals-row:not(.totals-total) .label { color: #7a6a62; }
+  .totals-row:not(.totals-total) .value { color: #4a3c36; font-weight: 500; }
+  .totals-divider { border-top: 1px solid #e7ddcb; margin: 0.4rem 0; }
+  .totals-total { font-size: 1.05rem; font-weight: 800; color: #790d16; border-top: 2px solid #e5d3af; padding-top: 0.6rem; margin-top: 0.2rem; }
+  .totals-total .value { color: #790d16; }
+  .status-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+  .status-paid { background: #dcfce7; color: #166534; }
+  .status-pending { background: #fef3c7; color: #92400e; }
+  .status-failed { background: #fee2e2; color: #991b1b; }
+  .status-refunded { background: #e0e7ff; color: #3730a3; }
+  .footer-note { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e7ddcb; text-align: center; color: #7a6a62; font-size: 0.8rem; line-height: 1.6; }
+  .footer-note strong { color: #33141b; }
+  .print-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid #e7ddcb; }
+  .invoice-topbar { text-align: center; }
+  .invoice-topbar-title { font-size: 1.75rem; font-weight: 800; color: #33141b; margin-bottom: 0.25rem; }
+  .invoice-topbar-sub { color: #7a6a62; font-size: 0.95rem; margin-bottom: 1rem; }
+  .invoice-topbar-actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+  @media print {
+    @page { size: A4; margin: 12mm 13mm; }
+    .print-actions, .invoice-topbar { display: none !important; }
+    .au-topbar, .au-header, .au-footer, .au-newsletter { display: none !important; }
+    html, body { background: #fff !important; }
+    .au-card { box-shadow: none !important; border: none !important; }
+    .invoice-container { max-width: 100% !important; }
+    .invoice-header { border-radius: 0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .invoice-header::before { display: none !important; }
+    .invoice-body { border: none !important; padding: 0 !important; }
+    .invoice-header, .address-block, .invoice-table th, .qty-badge, .status-badge {
+      -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    }
+    .invoice-table tbody tr:hover td { background: transparent !important; }
+    .invoice-section, .address-block, .invoice-table tr, .totals, .footer-note {
+      break-inside: avoid; page-break-inside: avoid;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="invoice-topbar mb-4">
+  <h1 class="invoice-topbar-title">{% trans "Invoice" %}</h1>
+  <p class="invoice-topbar-sub">{{ order.order_number }} · {{ order.created_at|date:"F j, Y" }}</p>
+  <div class="invoice-topbar-actions">
+    <a class="btn btn-outline-secondary" href="{% url 'orders:detail' order.order_number %}">{% trans "Back to order" %}</a>
+    <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer"></i> {% trans "Print / PDF" %}</button>
+  </div>
+</div>
+
+<div class="invoice-container au-card shadow-lg" style="border: none; overflow: hidden;">
+  
+  <!-- Header with Logo -->
+  <header class="invoice-header">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+      <div class="brand">
+        <img src="{% static 'images/logo.png' %}" alt="{{ SITE_NAME }}" class="brand-logo">
+        <span class="brand-text">{{ SITE_NAME }}</span>
+      </div>
+      <div class="invoice-meta text-center">
+        <div class="invoice-tag">{% blocktrans with number=order.order_number %}INVOICE {{ number }}{% endblocktrans %}</div>
+        <div class="label mt-3">{% trans "Issued" %}</div>
+        <div class="value">{{ order.created_at|date:"M j, Y" }}</div>
+        <div class="label mt-3">{% trans "Status" %}</div>
+        <div class="value mt-1">
+          {% if order.is_paid %}
+            <span class="status-badge status-paid"><i class="bi bi-check-circle"></i> {% trans "Paid" %}</span>
+          {% elif order.payment_status == "pending" %}
+            <span class="status-badge status-pending"><i class="bi bi-clock"></i> {% trans "Pending" %}</span>
+          {% elif order.payment_status == "refunded" %}
+            <span class="status-badge status-refunded"><i class="bi bi-arrow-return-left"></i> {% trans "Refunded" %}</span>
+          {% else %}
+            <span class="status-badge status-failed"><i class="bi bi-x-circle"></i> {{ order.get_payment_status_display }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div class="invoice-body">
+    <!-- Addresses -->
+    <div class="row g-4 invoice-section">
+      <div class="col-sm-6">
+        <div class="invoice-section-title">{% trans "Billed to" %}</div>
+        <div class="address-block">
+          <div class="address-name">{{ order.billing_full_name|default:order.shipping_full_name }}</div>
+          {{ order.billing_address_line|linebreaksbr }}
+          {% if order.billing_email %}<div class="mt-1"><i class="bi bi-envelope me-1"></i>{{ order.billing_email }}</div>{% endif %}
+          {% if order.billing_phone %}<div><i class="bi bi-telephone me-1"></i>{{ order.billing_phone }}</div>{% endif %}
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="invoice-section-title">{% trans "Ship to" %}</div>
+        <div class="address-block">
+          <div class="address-name">{{ order.shipping_full_name }}</div>
+          {{ order.shipping_address_line|linebreaksbr }}
+          {% if order.email %}<div class="mt-1"><i class="bi bi-envelope me-1"></i>{{ order.email }}</div>{% endif %}
+          {% if order.phone %}<div><i class="bi bi-telephone me-1"></i>{{ order.phone }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="invoice-section">
+      <div class="table-responsive">
+        <table class="invoice-table">
+          <thead>
+            <tr>
+              <th style="width: 50%;">{% trans "Item" %}</th>
+              <th style="width: 12%;" class="text-center">{% trans "Qty" %}</th>
+              <th style="width: 19%;" class="price-col">{% trans "Unit" %}</th>
+              <th style="width: 19%;" class="price-col">{% trans "Amount" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in order.items.all %}
+            <tr>
+              <td>
+                <div class="item-name">{{ item.display_name }}</div>
+                <div class="item-sku">{% blocktrans with sku=item.product_sku %}SKU {{ sku }}{% endblocktrans %}</div>
+              </td>
+              <td class="text-center"><span class="qty-badge">{{ item.quantity }}</span></td>
+              <td class="price-col">{{ item.unit_price|currency }}</td>
+              <td class="price-col fw-semibold">{{ item.line_total|currency }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Totals -->
+    <div class="invoice-section">
+      <div class="totals">
+        <div class="totals-row">
+          <span class="label">{% trans "Subtotal" %}</span>
+          <span class="value">{{ order.subtotal|currency }}</span>
+        </div>
+        {% if order.discount %}
+        <div class="totals-row">
+          <span class="label">{% trans "Discount" %}</span>
+          <span class="value text-success">−{{ order.discount|currency }}</span>
+        </div>
+        {% endif %}
+        <div class="totals-divider"></div>
+        <div class="totals-row">
+          <span class="label">{% trans "Shipping" %}</span>
+          <span class="value">{{ order.shipping_cost|currency }}</span>
+        </div>
+        <div class="totals-row">
+          <span class="label">{% trans "Tax" %}</span>
+          <span class="value">{{ order.tax|currency }}</span>
+        </div>
+        <div class="totals-row totals-total">
+          <span class="label">{% trans "Total due" %}</span>
+          <span class="value">{{ order.total|currency }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Note -->
+    <div class="footer-note">
+      <strong>{% trans "Thank you for your business." %}</strong><br>
+      {% blocktrans with email=SUPPORT_EMAIL %}Questions about this invoice? Contact {{ email }}.{% endblocktrans %}
+    </div>
+
+    <!-- Print Actions -->
+    <div class="print-actions">
+      <a class="btn btn-primary" href="{% url 'orders:invoice_pdf' order.order_number %}">
+        <i class="bi bi-file-earmark-arrow-down"></i> {% trans "Download PDF" %}
+      </a>
+      <button class="btn btn-outline-primary" onclick="window.print()">
+        <i class="bi bi-printer"></i> {% trans "Print" %}
+      </button>
+      <a class="btn btn-outline-secondary" href="{% url 'orders:detail' order.order_number %}">
+        <i class="bi bi-arrow-left"></i> {% trans "Back" %}
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

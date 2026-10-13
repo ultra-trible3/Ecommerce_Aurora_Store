@@ -1,0 +1,43 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% if mode == 'create' %}{% trans "New coupon" %}{% else %}{% trans "Edit coupon" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% if mode == 'create' %}{% trans "New coupon" %}{% else %}{% blocktrans with code=coupon.code %}Edit “{{ code }}”{% endblocktrans %}{% endif %}</h1>
+    <p class="mg-sub mb-0">{% trans "Percentage, fixed amount or free shipping." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:coupons' %}"><i class="bi bi-arrow-left"></i> {% trans "Back" %}</a>
+</div>
+
+<form method="post" class="mg-card" style="max-width:760px">
+  {% csrf_token %}
+  <div class="mg-card-body">
+    <div class="row g-3">
+      {% for field in form %}
+        <div class="{% if field.name == 'description' or field.name == 'applies_to_first_order_only' %}col-12{% else %}col-md-6{% endif %}">
+          {% if field.field.widget.input_type == "checkbox" %}
+            <div class="form-check">
+              {{ field }}
+              <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            </div>
+          {% else %}
+            <div class="mg-field mb-0">
+              <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {{ field.errors }}
+              {% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="d-flex gap-2 p-3 border-top">
+    <button class="mg-btn mg-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {% trans "Save coupon" %}</button>
+    <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:coupons' %}">{% trans "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

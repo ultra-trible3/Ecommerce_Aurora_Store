@@ -1,0 +1,58 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Notifications" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Notifications" %}</h1>
+    <p class="mg-sub mb-0">{% blocktrans count counter=unread_count %}{{ counter }} unread message.{% plural %}{{ counter }} unread messages.{% endblocktrans %}</p>
+  </div>
+  <form method="post" action="{% url 'dashboard:notification_read_all' %}">
+    {% csrf_token %}
+    <button class="mg-btn mg-btn-ghost" type="submit"><i class="bi bi-check-all"></i> {% trans "Mark all read" %}</button>
+  </form>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+  <a href="{% url 'dashboard:notifications' %}" class="mg-chip {% if not filter %}pending{% else %}neutral{% endif %}">{% trans "All" %}</a>
+  <a href="?filter=unread" class="mg-chip {% if filter == 'unread' %}pending{% else %}neutral{% endif %}">{% trans "Unread" %}</a>
+</div>
+
+<div class="mg-card">
+  {% for n in notifications %}
+    <div class="d-flex gap-3 p-3 border-bottom align-items-start {% if not n.is_read %}bg-white{% endif %}">
+      <span class="au-avatar" style="width:38px;height:38px;font-size:13px;background:#f5efe1;color:#4a3c36">
+        {% if n.type == 'order' %}<i class="bi bi-receipt"></i>
+        {% elif n.type == 'payment' %}<i class="bi bi-credit-card"></i>
+        {% elif n.type == 'stock' %}<i class="bi bi-exclamation-triangle"></i>
+        {% elif n.type == 'review' %}<i class="bi bi-star"></i>
+        {% elif n.type == 'promo' %}<i class="bi bi-tags"></i>
+        {% else %}<i class="bi bi-bell"></i>{% endif %}
+      </span>
+      <div class="flex-grow-1">
+        <b style="font-size:14px">{{ n.title }}</b>
+        {% if not n.is_read %}<span class="mg-chip pending ms-1">{% trans "New" %}</span>{% endif %}
+        <div class="text-muted" style="font-size:13.5px">{{ n.body }}</div>
+        <div class="text-muted" style="font-size:12px">{{ n.created_at|date:"M j, Y g:i A" }}</div>
+      </div>
+      <div class="d-flex gap-2">
+        {% if n.link %}
+          <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{{ n.link }}">{% trans "Open" %}</a>
+        {% endif %}
+        {% if not n.is_read %}
+          <form method="post" action="{% url 'dashboard:notification_read' n.pk %}">
+            {% csrf_token %}
+            <button class="mg-btn mg-btn-ghost mg-btn-sm" type="submit"><i class="bi bi-check"></i></button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="mg-empty"><i class="bi bi-bell-slash"></i>{% trans "Nothing here yet." %}</div>
+  {% endfor %}
+</div>
+
+{% include "management/_pagination.html" with page_obj=page_obj %}
+{% endblock %}

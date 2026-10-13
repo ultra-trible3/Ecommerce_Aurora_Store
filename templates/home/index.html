@@ -1,0 +1,310 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{{ SITE_NAME }} — {{ SITE_TAGLINE }}{% endblock %}
+
+{% block content %}
+<!-- HERO SLIDER (managed banners) -->
+{% include "includes/hero_slider.html" %}
+
+{% if not banners %}
+<!-- HERO (default fallback) -->
+<section class="au-hero">
+  <div class="container-xxl">
+    <div class="au-hero-inner row align-items-center g-5">
+      <div class="col-lg-6">
+        <span class="au-eyebrow"><i class="bi bi-lightning-charge-fill"></i> {% trans "Season sale is live" %}</span>
+        <h1>{% blocktrans %}Everything you love,<br>delivered <span style="color:var(--au-primary)">tomorrow</span>.{% endblocktrans %}</h1>
+        <p class="lead mt-3">
+          {% blocktrans %}Discover curated tech, fashion and home essentials with fast shipping,
+          honest reviews and a checkout that takes less than a minute.{% endblocktrans %}
+        </p>
+        <div class="d-flex flex-wrap gap-2 mt-4">
+          <a href="{% url 'catalog:shop' %}" class="btn btn-primary btn-lg">
+            {% trans "Shop now" %} <i class="bi bi-arrow-right"></i>
+          </a>
+          <a href="{% url 'catalog:shop' %}?sort=discount" class="btn btn-outline-secondary btn-lg">
+            {% trans "Explore deals" %}
+          </a>
+        </div>
+        {% if active_coupon %}
+          <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
+            <span class="code"><i class="bi bi-tag-fill"></i> {{ active_coupon.code }}</span>
+            <span class="small text-muted">{% blocktrans with label=active_coupon.discount_label %}{{ label }} · limited time{% endblocktrans %}</span>
+          </div>
+        {% endif %}
+
+        <div class="au-stat-strip">
+          <div class="stat"><b>{{ total_products }}+</b><span>{% trans "Products" %}</span></div>
+          <div class="stat"><b>{{ total_categories }}+</b><span>{% trans "Categories" %}</span></div>
+          <div class="stat"><b>{{ avg_rating|floatformat:1 }}★</b><span>{% trans "Avg. rating" %}</span></div>
+          <div class="stat"><b>24h</b><span>{% trans "Dispatch" %}</span></div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="au-hero-art">
+          <div class="text-center">
+            <div style="font-size:4.5rem;color:var(--au-primary)">
+              <i class="bi bi-bag-dash"></i>
+            </div>
+            <div class="fw-bold mt-3" style="font-size:1.2rem">{% trans "Curated weekly drops" %}</div>
+            <div class="text-muted small">{% trans "Hand-picked by our merchandising team" %}</div>
+            <div class="d-flex justify-content-center gap-3 mt-4">
+              <div class="text-center">
+                <div class="fw-bold text-ink">{% trans "Free" %}</div>
+                <div class="small text-muted">{% trans "returns" %}</div>
+              </div>
+              <div class="text-center">
+                <div class="fw-bold text-ink">100%</div>
+                <div class="small text-muted">{% trans "secure pay" %}</div>
+              </div>
+              <div class="text-center">
+                <div class="fw-bold text-ink">4.8★</div>
+                <div class="small text-muted">{% trans "rated" %}</div>
+              </div>
+            </div>
+          </div>
+          <div class="hero-price" style="top:8%;left:6%">
+            <i class="bi bi-truck text-primary"></i> {% trans "Free shipping over $75" %}
+          </div>
+          <div class="hero-price" style="bottom:10%;right:6%">
+            <i class="bi bi-shield-check" style="color:var(--au-success)"></i> {% trans "Buyer protection" %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- DEALS & PROMOTIONS (mosaic banner grid) -->
+{% include "includes/deals_mosaic.html" %}
+
+<!-- RECENTLY VIEWED -->
+{% if recently_viewed_products %}
+<section class="au-section">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow"><i class="bi bi-clock-history"></i> {% trans "Recently viewed" %}</span>
+        <h2>{% trans "Pick up where you left off" %}</h2>
+      </div>
+    </div>
+    <div class="row g-3 g-md-4">
+      {% for product in recently_viewed_products %}
+        <div class="col-6 col-md-3">
+          {% include "includes/product_card.html" with product=product %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- TRUSTED BY / LOGO MARQUEE -->
+{% include "includes/logo_marquee.html" %}
+
+<!-- CATEGORIES -->
+{% if categories %}
+<section class="au-section">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow"><i class="bi bi-grid"></i> {% trans "Shop by category" %}</span>
+        <h2>{% trans "Popular categories" %}</h2>
+        <p>{% trans "Start with a department and narrow down from there." %}</p>
+      </div>
+      <a href="{% url 'catalog:shop' %}" class="btn btn-sm btn-outline-secondary">{% trans "View all" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-3 g-md-4">
+      {% for cat in categories %}
+        <div class="col-6 col-md-4 col-xl-3">
+          <a class="au-cat" href="{{ cat.get_absolute_url }}">
+            <div class="cat-img">
+              {% if cat.image %}
+                <img src="{{ cat.image.url }}" alt="{{ cat.name }}" loading="lazy">
+              {% else %}
+                <span class="glyph"><i class="bi bi-box-seam"></i></span>
+              {% endif %}
+            </div>
+            <div class="cat-body">
+              <div>
+                <b>{{ cat.name }}</b>
+                <span class="d-block">{% blocktrans count counter=cat.product_count %}{{ counter }} product{% plural %}{{ counter }} products{% endblocktrans %}</span>
+              </div>
+              <i class="bi bi-arrow-right text-muted-2"></i>
+            </div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- FEATURED -->
+{% if featured_products %}
+<section class="au-section au-section-alt">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow"><i class="bi bi-stars"></i> {% trans "Hand-picked" %}</span>
+        <h2>{% trans "Featured products" %}</h2>
+        <p>{% trans "Our team's favourite picks this week." %}</p>
+      </div>
+      <a href="{% url 'catalog:shop' %}?featured=1" class="btn btn-sm btn-outline-secondary">{% trans "All featured" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-3 g-md-4">
+      {% for product in featured_products %}
+        <div class="col-6 col-md-4 col-xl-3">
+          {% include "includes/product_card.html" with product=product %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- PROMO -->
+<section class="au-section pb-0">
+  <div class="container-xxl">
+    <div class="row g-4 align-items-stretch">
+      <div class="col-lg-7">
+        <div class="au-promo h-100">
+          <span class="badge bg-white text-primary mb-3">{% trans "Limited offer" %}</span>
+          <h3>{% trans "Mid-season clearance — up to 40% off" %}</h3>
+          <p>
+            {% blocktrans %}Hundreds of lines reduced while stock lasts. Stack the savings with
+            free shipping over $75.{% endblocktrans %}
+          </p>
+          <div class="d-flex gap-2 flex-wrap mt-3 align-items-center">
+            <a href="{% url 'catalog:shop' %}?sale=1" class="btn btn-light fw-semibold">
+              {% trans "Shop the sale" %} <i class="bi bi-arrow-right"></i>
+            </a>
+            {% if active_coupon %}
+              <span class="code">{{ active_coupon.code }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="au-card h-100 p-4 d-flex flex-column justify-content-center">
+          <span class="au-eyebrow"><i class="bi bi-box-seam"></i> {% trans "New arrivals" %}</span>
+          <h3 class="h5">{% trans "Fresh stock, every week" %}</h3>
+          <p class="text-muted small mb-3">
+            {% trans "Be first to know when new products drop — subscribers get early access." %}
+          </p>
+          <a href="{% url 'catalog:shop' %}?sort=newest" class="btn btn-soft align-self-start">
+            {% trans "See what's new" %}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- NEW ARRIVALS -->
+{% if new_arrivals %}
+<section class="au-section">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow"><i class="bi bi-stars"></i> {% trans "Just landed" %}</span>
+        <h2>{% trans "New arrivals" %}</h2>
+      </div>
+      <a href="{% url 'catalog:shop' %}?sort=newest" class="btn btn-sm btn-outline-secondary">{% trans "View all" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-3 g-md-4">
+      {% for product in new_arrivals %}
+        <div class="col-6 col-md-4 col-xl-3">
+          {% include "includes/product_card.html" with product=product %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- BEST SELLERS -->
+{% if best_sellers %}
+<section class="au-section au-section-alt">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow"><i class="bi bi-trophy"></i> {% trans "Crowd favourites" %}</span>
+        <h2>{% trans "Best sellers" %}</h2>
+        <p>{% trans "What everyone else is buying right now." %}</p>
+      </div>
+      <a href="{% url 'catalog:shop' %}?sort=popular" class="btn btn-sm btn-outline-secondary">{% trans "View all" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-3 g-md-4">
+      {% for product in best_sellers %}
+        <div class="col-6 col-md-4 col-xl-3">
+          {% include "includes/product_card.html" with product=product %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- ON SALE -->
+{% if on_sale_products %}
+<section class="au-section">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow" style="background:#790d16;color:#f5efe1"><i class="bi bi-fire"></i> {% trans "Deals" %}</span>
+        <h2>{% trans "On sale now" %}</h2>
+      </div>
+      <a href="{% url 'catalog:shop' %}?sale=1" class="btn btn-sm btn-outline-secondary">{% trans "All deals" %} <i class="bi bi-arrow-right"></i></a>
+    </div>
+    <div class="row g-3 g-md-4">
+      {% for product in on_sale_products %}
+        <div class="col-6 col-md-4 col-xl-3">
+          {% include "includes/product_card.html" with product=product %}
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<!-- TESTIMONIALS -->
+{% if testimonials %}
+<section class="au-section au-section-alt">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow"><i class="bi bi-chat-quote"></i> {% trans "Real reviews" %}</span>
+        <h2>{% trans "What customers say" %}</h2>
+        <p>{% trans "Verified reviews from people who actually bought the products." %}</p>
+      </div>
+    </div>
+    <div class="row g-3 g-md-4">
+      {% for review in testimonials %}
+        <div class="col-md-6 col-xl-4">
+          <div class="au-testimonial">
+            {% include "includes/stars.html" with rating=review.rating %}
+            <p>“{{ review.body|truncatechars:180 }}”</p>
+            <div class="who">
+              <span class="au-avatar" style="width:38px;height:38px;font-size:.8rem">
+                {{ review.user.initials }}
+              </span>
+              <span>
+                <b>{{ review.user.get_full_name|default:review.user.username }}</b>
+                <span>
+                  {% if review.is_verified_purchase %}{% trans "✓ Verified purchase" %} · {% endif %}
+                  {{ review.product.name|truncatechars:32 }}
+                </span>
+              </span>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

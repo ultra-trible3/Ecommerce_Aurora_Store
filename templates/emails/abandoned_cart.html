@@ -1,0 +1,50 @@
+{% extends "emails/base.html" %}
+{% load i18n core_tags static %}
+
+{% block subject %}{% trans "You left something in your cart" %} — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div style="text-align:center; padding: 2rem 1rem;">
+  <img src="{{ SITE_URL }}{% static 'images/logo.png' %}" alt="{{ SITE_NAME }}" style="height: 48px; margin-bottom: 1.5rem;">
+  <h1 style="color: #33141b; font-size: 1.5rem; margin-bottom: 1rem;">{% trans "You left something in your cart" %}</h1>
+  <p style="color: #7a6a62; font-size: 1rem; margin-bottom: 2rem;">{% blocktrans with name=email|default:_("there") %}Hi {{ name }}, we saved your cart. Pick up where you left off.{% endblocktrans %}</p>
+</div>
+
+<table style="width:100%; border-collapse:collapse; margin-bottom: 2rem;">
+  <thead>
+    <tr style="background: #f5efe1; border-bottom: 2px solid #e7ddcb;">
+      <th style="padding: 1rem; text-align:left; color: #4a3c36; font-size: 0.85rem; text-transform:uppercase; letter-spacing:0.06em;">{% trans "Item" %}</th>
+      <th style="padding: 1rem; text-align:center; color: #4a3c36; font-size: 0.85rem; text-transform:uppercase; letter-spacing:0.06em;">{% trans "Qty" %}</th>
+      <th style="padding: 1rem; text-align:right; color: #4a3c36; font-size: 0.85rem; text-transform:uppercase; letter-spacing:0.06em;">{% trans "Price" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+    <tr style="border-bottom: 1px solid #f0ebe0;">
+      <td style="padding: 1rem;">
+        <div style="font-weight: 500; color: #33141b;">{{ item.name }}</div>
+      </td>
+      <td style="padding: 1rem; text-align:center;">
+        <span style="background: #e5d3af; color: #790d16; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem;">{{ item.quantity }}</span>
+      </td>
+      <td style="padding: 1rem; text-align:right; color: #4a3c36; font-variant-numeric: tabular-nums;">{{ item.price|currency }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div style="text-align:right; margin-bottom: 2rem; padding: 1rem; background: #f5efe1; border-radius: 10px;">
+  <div style="font-size: 0.85rem; color: #7a6a62;">{% trans "Subtotal" %}</div>
+  <div style="font-size: 1.5rem; font-weight: 800; color: #790d1b;">{{ subtotal|currency }}</div>
+</div>
+
+<div style="text-align:center; margin-top: 2rem;">
+  <a href="{{ recovery_url }}" style="background: #790d16; color: #fff; padding: 1rem 2rem; border-radius: 10px; font-weight: 700; font-size: 1rem; text-decoration: none; display: inline-block;">
+    {% trans "Complete my order" %}
+  </a>
+</div>
+
+<p style="text-align:center; color: #7a6a62; font-size: 0.85rem; margin-top: 2rem;">
+  {% blocktrans with email=SUPPORT_EMAIL %}Questions? Reply to this email or contact us at {{ email }}.{% endblocktrans %}
+</p>
+{% endblock %}

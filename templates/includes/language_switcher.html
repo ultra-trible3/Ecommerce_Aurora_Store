@@ -1,0 +1,8 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<form method="post" action="{% url 'set_language' %}" id="au-lang-form" class="au-lang" aria-label="{% trans 'Language' %}">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <button type="submit" name="language" value="en" data-lang="en" class="au-lang-btn{% if LANGUAGE_CODE == 'en' %} is-active{% endif %}" lang="en" title="English" aria-pressed="{% if LANGUAGE_CODE == 'en' %}true{% else %}false{% endif %}">EN</button>
+  <button type="submit" name="language" value="ar" data-lang="ar" class="au-lang-btn{% if LANGUAGE_CODE == 'ar' %} is-active{% endif %}" lang="ar" title="العربية" aria-pressed="{% if LANGUAGE_CODE == 'ar' %}true{% else %}false{% endif %}">AR</button>
+</form>

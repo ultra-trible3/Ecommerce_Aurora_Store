@@ -1,0 +1,128 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Audit Log" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Admin Audit Log" %}</h1>
+    <p class="mg-sub mb-0">{% trans "Track all administrative actions" %}</p>
+  </div>
+  <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:audit_log' %}?export=csv&{{ request.GET.urlencode }}">
+    <i class="bi bi-download"></i> {% trans "Export CSV" %}
+  </a>
+</div>
+
+<div class="mg-card mb-4">
+  <div class="mg-card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small">{% trans "User" %}</label>
+        <select name="user" class="form-select">
+          <option value="">{% trans "All users" %}</option>
+          {% for u in users %}
+            <option value="{{ u.pk }}" {% if u.pk|stringformat:"s" == filters.user %}selected{% endif %}>{{ u.get_full_name|default:u.email }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">{% trans "Action" %}</label>
+        <select name="action" class="form-select">
+          <option value="">{% trans "All actions" %}</option>
+          {% for code, label in actions %}
+            <option value="{{ code }}" {% if code == filters.action %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">{% trans "Object type" %}</label>
+        <select name="object_type" class="form-select">
+          <option value="">{% trans "All types" %}</option>
+          {% for ot in object_types %}
+            <option value="{{ ot }}" {% if ot == filters.object_type %}selected{% endif %}>{{ ot }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">{% trans "Object ID" %}</label>
+        <input type="text" name="object_id" value="{{ filters.object_id }}" class="form-control" placeholder="{% trans "Order #, etc." %}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">{% trans "From" %}</label>
+        <input type="date" name="date_from" value="{{ filters.date_from }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small">{% trans "To" %}</label>
+        <input type="date" name="date_to" value="{{ filters.date_to }}" class="form-control">
+      </div>
+      <div class="col-md-2">
+        <button class="mg-btn mg-btn-primary w-100" type="submit"><i class="bi bi-search"></i> {% trans "Filter" %}</button>
+      </div>
+      <div class="col-md-2">
+        {% if filters.user or filters.action or filters.object_type or filters.object_id or filters.date_from or filters.date_to %}
+          <a href="{% url 'dashboard:audit_log' %}" class="mg-btn mg-btn-ghost w-100">{% trans "Clear" %}</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr>
+          <th style="width:160px">{% trans "Date" %}</th>
+          <th style="width:140px">{% trans "User" %}</th>
+          <th style="width:120px">{% trans "Action" %}</th>
+          <th style="width:120px">{% trans "Object" %}</th>
+          <th>{% trans "Details" %}</th>
+          <th style="width:120px">{% trans "IP" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+          <tr>
+            <td>{{ log.created_at|date:"M j, Y g:i A" }}</td>
+            <td>
+              {% if log.user %}
+                {{ log.user.get_full_name|default:log.user.email }}
+              {% else %}
+                <span class="text-muted">{% trans "System" %}</span>
+              {% endif %}
+            </td>
+            <td><span class="mg-chip">{{ log.action }}</span></td>
+            <td>
+              {% if log.object_id %}
+                <strong>{{ log.object_type }}</strong> {{ log.object_id }}
+              {% else %}
+                <span class="text-muted">{{ log.object_type }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="small text-muted">{{ log.object_repr }}</div>
+              {% if log.changes %}
+                <details class="mt-1">
+                  <summary class="small text-muted">{% trans "Changes" %}</summary>
+                  <pre class="small mt-1 p-2 rounded" style="background:#f8f9fa;max-height:150px;overflow:auto">{{ log.changes|json_script:"audit-changes" }}</pre>
+                </details>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ log.ip_address|default:"—" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">{% trans "No audit log entries found." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+    <div class="mg-card-foot">
+      {% include "management/_pagination.html" %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

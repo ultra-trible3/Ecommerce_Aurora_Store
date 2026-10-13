@@ -1,0 +1,19 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<p>{% blocktrans with name=order.customer_name %}Hi {{ name }},{% endblocktrans %}</p>
+
+<p>{% blocktrans with number=order.order_number %}We received your return request for <strong>Order {{ number }}</strong>.{% endblocktrans %}</p>
+
+<p><strong>{% trans "Return ID:" %}</strong> #{{ return_request.pk }}<br>
+<strong>{% trans "Items:" %}</strong> {{ return_request.items.count }}<br>
+<strong>{% trans "Refund Amount:" %}</strong> {{ return_request.refund_amount|currency }}</p>
+
+<p>{% trans "Our team will review your request within 1-2 business days. You'll receive an email once it's approved with shipping instructions." %}</p>
+
+<p>{% blocktrans %}You can check the status anytime in your <a href="{{ site_url }}/orders/{{ order.order_number }}/return/{{ return_request.pk }}/">account</a>.{% endblocktrans %}</p>
+
+<p>{% trans "Thanks for shopping with us!" %}</p>
+<p>{% blocktrans with site=SITE_NAME %}The {{ site }} Team{% endblocktrans %}</p>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% load i18n static %}
+{% comment %}
+Deals & Promotions mosaic — a responsive banner grid driven by
+``apps/catalog/deals.py`` (exposed as ``home_deals`` via the ``deals_mosaic``
+context processor).
+
+The grid is intentionally image-optional: when a tile has no ``image`` it
+falls back to on-brand gradient + icon artwork, so the storefront never points
+at assets that do not exist. Drop real banners into ``static/`` and set the
+tile's ``image`` path to switch a tile to a photographic background.
+{% endcomment %}
+{% if home_deals %}
+<section class="au-section au-deals-section">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow"><i class="bi bi-tags-fill"></i> {% trans "Deals &amp; Promotions" %}</span>
+        <h2>{% trans "Today's top offers" %}</h2>
+        <p>{% trans "Mega savings, super bundles and exclusive rewards — all in one place." %}</p>
+      </div>
+      <a href="{% url 'catalog:shop' %}?sale=1" class="btn btn-sm btn-outline-secondary">
+        {% trans "All deals" %} <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="au-deals">
+      {% for deal in home_deals %}
+        {% url deal.route as deal_url %}
+        <a class="au-deal tone-{{ deal.tone }} is-{{ deal.size }}{% if deal.image %} has-image{% endif %}"
+           href="{{ deal_url }}{% if deal.query %}?{{ deal.query }}{% endif %}"
+           aria-label="{{ deal.eyebrow }}: {{ deal.title }}">
+          {% if deal.image %}
+            <img class="au-deal-media" src="{% static deal.image %}" alt="{{ deal.title }}"
+                 loading="lazy" decoding="async">
+          {% else %}
+            <i class="au-deal-art bi {{ deal.icon }}" aria-hidden="true"></i>
+          {% endif %}
+
+          <div class="au-deal-body">
+            <span class="au-deal-badge">{{ deal.badge }}</span>
+            <span class="au-deal-eyebrow">{{ deal.eyebrow }}</span>
+            <h3 class="au-deal-title">{{ deal.title }}</h3>
+            <p class="au-deal-sub">{{ deal.subtitle }}</p>
+            <span class="au-deal-cta">{{ deal.cta }} <i class="bi bi-arrow-right" aria-hidden="true"></i></span>
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}

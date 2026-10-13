@@ -1,0 +1,36 @@
+{% load i18n %}
+{% comment %}
+Report section navigation. Pass the currently active section as ``active``:
+
+    {% include "management/reports/_tabs.html" with active="overview" %}
+
+Valid values: overview, sales, categories, customers, products.
+Active date filters are preserved when switching sections.
+{% endcomment %}
+<nav class="mg-tabs" role="tablist" aria-label="{% trans 'Report sections' %}">
+  <a role="tab" class="mg-tab{% if active == 'overview' %} active{% endif %}"
+     {% if active == 'overview' %}aria-current="page"{% endif %}
+     href="{% url 'dashboard:reports' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+    <i class="bi bi-speedometer2"></i>{% trans "Overview" %}
+  </a>
+  <a role="tab" class="mg-tab{% if active == 'sales' %} active{% endif %}"
+     {% if active == 'sales' %}aria-current="page"{% endif %}
+     href="{% url 'dashboard:reports_sales' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+    <i class="bi bi-graph-up-arrow"></i>{% trans "Sales Details" %}
+  </a>
+  <a role="tab" class="mg-tab{% if active == 'categories' %} active{% endif %}"
+     {% if active == 'categories' %}aria-current="page"{% endif %}
+     href="{% url 'dashboard:reports_categories' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+    <i class="bi bi-diagram-3"></i>{% trans "By Category" %}
+  </a>
+  <a role="tab" class="mg-tab{% if active == 'customers' %} active{% endif %}"
+     {% if active == 'customers' %}aria-current="page"{% endif %}
+     href="{% url 'dashboard:reports_customers' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+    <i class="bi bi-people"></i>{% trans "Customers" %}
+  </a>
+  <a role="tab" class="mg-tab{% if active == 'products' %} active{% endif %}"
+     {% if active == 'products' %}aria-current="page"{% endif %}
+     href="{% url 'dashboard:reports_products' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+    <i class="bi bi-box-seam"></i>{% trans "Products" %}
+  </a>
+</nav>

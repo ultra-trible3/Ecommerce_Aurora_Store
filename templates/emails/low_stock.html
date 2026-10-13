@@ -1,0 +1,9 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Low stock alert" %}{% endblock %}
+{% block content %}
+  <h1>{% trans "Low stock alert" %}</h1>
+  <p>{% blocktrans with name=product.name qty=product.stock_quantity threshold=threshold %}<b>{{ name }}</b> is down to <b>{{ qty }}</b> unit(s) — at or below the threshold of {{ threshold }}.{% endblocktrans %}</p>
+  <p class="muted">{% blocktrans with sku=product.sku %}SKU {{ sku }}{% endblocktrans %}</p>
+  <p><a class="btn" href="{{ SITE_URL }}/management/inventory/?product={{ product.pk }}">{% trans "Adjust stock" %}</a></p>
+{% endblock %}

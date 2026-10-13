@@ -1,0 +1,33 @@
+{% load i18n %}{% get_current_language as LANGUAGE_CODE %}{% get_current_language_bidi as LANGUAGE_BIDI %}
+<!doctype html>
+<html lang="{{ LANGUAGE_CODE }}"{% if LANGUAGE_BIDI %} dir="rtl"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>400 — {% trans "Bad request" %}</title>
+  <style>
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:#f5efe1; color:#33141b; }
+    .card { text-align:center; padding:48px 32px; max-width:460px; }
+    .code { font-size:88px; font-weight:800; letter-spacing:-.04em; color:#790d16; line-height:1; }
+    h1 { font-size:22px; margin:16px 0 8px; }
+    p { color:#4a3c36; line-height:1.6; margin:0 0 24px; }
+    .btn { display:inline-block; padding:11px 22px; border-radius:10px; background:#790d16; color:#fff;
+      text-decoration:none; font-weight:600; font-size:15px; }
+    .btn.ghost { background:transparent; color:#790d16; border:1px solid #aec4d4; margin-inline-start:8px; margin-inline-end:0; }
+    .home { display:block; margin-top:28px; color:#7a6a62; font-size:13px; text-decoration:none; }
+    .home:hover { color:#790d16; }
+    [dir="rtl"] .code { letter-spacing:0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="code">400</div>
+    <h1>{% trans "Bad request" %}</h1>
+    <p>{% trans "The request could not be processed — it may be malformed or expired. Try again from the start." %}</p>
+    <a class="btn" href="/">{% trans "Back to home" %}</a>
+    <a class="btn ghost" href="/shop/">{% trans "Browse shop" %}</a>
+    <a class="home" href="/">{% trans "go to the store" %}</a>
+  </div>
+</body>
+</html>

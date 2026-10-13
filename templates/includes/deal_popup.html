@@ -1,0 +1,135 @@
+{% load i18n %}
+
+{% if popup_banner %}
+<div class="modal fade deal-promo-modal"
+     id="dealPromoModal{{ popup_banner.id }}"
+     tabindex="-1"
+     aria-labelledby="dealPromoLabel{{ popup_banner.id }}"
+     aria-hidden="true"
+     data-banner-id="{{ popup_banner.id }}"
+     data-show-once-per-session="{{ popup_banner.show_once_per_session|yesno:'true,false' }}"
+     data-promo-url="{% url 'banners:track_impression' popup_banner.id %}"
+     data-seen-url="{% url 'banners:mark_seen' popup_banner.id %}">
+
+  <div class="modal-dialog modal-dialog-centered deal-promo-dialog">
+    <div class="modal-content deal-promo-content">
+
+      <!-- Small X close button, top-right -->
+      <button type="button"
+              class="deal-promo-close"
+              data-bs-dismiss="modal"
+              aria-label="{% trans 'Close' %}">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+
+      <div class="deal-promo-body">
+        {% if popup_banner.mobile_image %}
+        <picture>
+          <source media="(max-width: 767px)" srcset="{{ popup_banner.mobile_image.url }}">
+          <img src="{{ popup_banner.image.url }}" alt="{{ popup_banner.title }}" class="deal-promo-image" loading="eager">
+        </picture>
+        {% else %}
+        <img src="{{ popup_banner.image.url }}" alt="{{ popup_banner.title }}" class="deal-promo-image" loading="eager">
+        {% endif %}
+
+        {% if popup_banner.modal_content %}
+        <div class="deal-promo-text">{{ popup_banner.modal_content|safe }}</div>
+        {% endif %}
+      </div>
+
+      {% if popup_banner.button_text and popup_banner.link_url %}
+      <div class="deal-promo-footer">
+        <a href="{{ popup_banner.link_url }}"
+           class="deal-promo-btn"
+           data-banner-id="{{ popup_banner.id }}"
+           data-banner-action="modal_link"
+           data-click-url="{% url 'banners:track_click' popup_banner.id %}">
+          {{ popup_banner.button_text }} <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Deal popup auto-show script -->
+<script>
+(function () {
+  "use strict";
+
+  function track(url) {
+    fetch(url, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": window.CSRFToken || window.CSRF_TOKEN || "",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      credentials: "same-origin",
+    }).catch(function () {});
+  }
+
+  function markSeenAndNavigate(modalEl, url) {
+    var bannerId = "{{ popup_banner.id }}";
+    var seenKey = "deal_popup_seen_" + bannerId;
+    sessionStorage.setItem(seenKey, "true");
+    if (modalEl.dataset.showOncePerSession === "true") {
+      track(modalEl.dataset.seenUrl || "");
+    }
+    if (url) window.location.href = url;
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var modalEl = document.getElementById("dealPromoModal{{ popup_banner.id }}");
+    if (!modalEl || typeof bootstrap === "undefined") return;
+
+    var bannerId = "{{ popup_banner.id }}";
+    var seenKey = "deal_popup_seen_" + bannerId;
+
+    // Auto-show once per browser session
+    if (sessionStorage.getItem(seenKey)) return;
+
+    var modal = new bootstrap.Modal(modalEl, {
+      backdrop: true,
+      keyboard: true,
+      focus: true,
+    });
+
+    modalEl.addEventListener("shown.bs.modal", function () {
+      track(modalEl.dataset.promoUrl || "");
+    });
+
+    modalEl.addEventListener("hidden.bs.modal", function () {
+      sessionStorage.setItem(seenKey, "true");
+      if (modalEl.dataset.showOncePerSession === "true") {
+        track(modalEl.dataset.seenUrl || "");
+      }
+    });
+
+    // Handle CTA button click - prevent default, track click, mark seen, then navigate
+    var ctaBtn = modalEl.querySelector(".deal-promo-btn");
+    if (ctaBtn) {
+      ctaBtn.addEventListener("click", function (e) {
+        e.preventDefault();
+        var url = this.getAttribute("href");
+        track(this.dataset.clickUrl || "");
+        var bsModal = bootstrap.Modal.getInstance(modalEl);
+        if (bsModal) {
+          bsModal.hide();
+          // Wait for modal to fully hide then navigate
+          modalEl.addEventListener("hidden.bs.modal", function handler() {
+            modalEl.removeEventListener("hidden.bs.modal", handler);
+            markSeenAndNavigate(modalEl, url);
+          }, { once: true });
+        } else {
+          markSeenAndNavigate(modalEl, url);
+        }
+      });
+    }
+
+    setTimeout(function () {
+      modal.show();
+    }, 800);
+  });
+})();
+</script>
+{% endif %}

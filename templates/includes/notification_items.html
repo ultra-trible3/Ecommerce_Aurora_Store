@@ -1,0 +1,35 @@
+{% load i18n %}
+{% if notifications %}
+  {% for n in notifications %}
+    <div class="item {% if not n.is_read %}unread{% endif %}" data-notif-item
+         {% if not n.is_read %}data-notif-read="{% url 'notifications:mark_read' n.pk %}"{% endif %}>
+      <span class="ic">
+        {% if n.type == 'order' %}<i class="bi bi-box-seam"></i>
+        {% elif n.type == 'payment' %}<i class="bi bi-credit-card"></i>
+        {% elif n.type == 'promo' %}<i class="bi bi-tags"></i>
+        {% elif n.type == 'stock' %}<i class="bi bi-exclamation-triangle"></i>
+        {% elif n.type == 'review' %}<i class="bi bi-star"></i>
+        {% elif n.type == 'wishlist' %}<i class="bi bi-heart"></i>
+        {% else %}<i class="bi bi-bell"></i>{% endif %}
+      </span>
+      <span class="flex-grow-1">
+        {% if n.link %}
+          <a class="item-title" href="{{ n.link }}"><b>{{ n.title }}</b></a>
+        {% else %}
+          <b>{{ n.title }}</b>
+        {% endif %}
+        {% if n.body %}<span class="d-block text-muted" style="font-size:.8rem">{{ n.body|truncatechars:90 }}</span>{% endif %}
+        <time class="d-block">{% blocktrans with time=n.created_at|timesince %}{{ time }} ago{% endblocktrans %}</time>
+      </span>
+      {% if not n.is_read %}
+        <button class="au-notif-read" type="button"
+                data-notif-read-btn
+                title="{% trans 'Mark as read' %}" aria-label="{% trans 'Mark as read' %}">
+          <i class="bi bi-check2"></i>
+        </button>
+      {% endif %}
+    </div>
+  {% endfor %}
+{% else %}
+  <div class="item empty"><span>{% trans "No notifications yet." %}</span></div>
+{% endif %}

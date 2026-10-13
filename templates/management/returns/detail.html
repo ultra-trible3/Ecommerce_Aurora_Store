@@ -1,0 +1,217 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans with pk=return_request.pk %}Return #{{ pk }}{% endblocktrans %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:returns' %}"><i class="bi bi-arrow-left"></i> {% trans "Returns" %}</a>
+    <h1 class="mg-title mt-1">{% blocktrans with pk=return_request.pk %}Return #{{ pk }}{% endblocktrans %}</h1>
+    <p class="mg-sub mb-0">
+      {% trans "Order" %}: <a href="{% url 'dashboard:order_detail' order.order_number %}">{{ order.order_number }}</a> ·
+      {{ return_request.created_at|date:"F j, Y · g:i A" }}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <span class="mg-chip {{ return_request.status }} align-self-center">{{ return_request.get_status_display }}</span>
+    <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:order_detail' order.order_number %}">
+      <i class="bi bi-box-seam"></i> {% trans "View Order" %}
+    </a>
+  </div>
+</div>
+
+{% if messages %}
+  {% for message in messages %}
+    <div class="au-alert mb-3 {% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</div>
+  {% endfor %}
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="mg-card mb-4">
+      <div class="mg-card-head"><h5>{% trans "Return Items" %}</h5></div>
+      <div class="table-responsive">
+        <table class="mg-table">
+          <thead>
+            <tr><th>{% trans "Product" %}</th><th>{% trans "SKU" %}</th><th class="text-end">{% trans "Qty" %}</th><th class="text-end">{% trans "Refund" %}</th></tr>
+          </thead>
+          <tbody>
+            {% for item in items %}
+              <tr>
+                <td>{{ item.order_item.display_name }}</td>
+                <td class="text-muted">{{ item.order_item.product_sku }}</td>
+                <td class="text-end">{{ item.quantity }}</td>
+                <td class="text-end fw-bold">{{ item.refund_amount|currency }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            <tr><td colspan="3" class="text-end text-muted">{% trans "Total" %}</td><td class="text-end fw-bold" style="font-size:16px">{{ return_request.refund_amount|currency }}</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <div class="mg-card mb-4">
+      <div class="mg-card-head"><h5>{% trans "Details" %}</h5></div>
+      <div class="mg-card-body">
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <div class="small text-muted">{% trans "Customer" %}</div>
+            <div class="fw-semibold">
+              <a href="{% url 'dashboard:customer_detail' return_request.user.pk %}">{{ return_request.user.get_full_name|default:return_request.user.email }}</a>
+              <{{ return_request.user.email }}>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="small text-muted">{% trans "Reason" %}</div>
+            <div class="fw-semibold">{{ return_request.get_reason_display }}</div>
+          </div>
+          <div class="col-12">
+            <div class="small text-muted">{% trans "Reason details" %}</div>
+            <div>{{ return_request.reason_detail|default:"—"|linebreaksbr }}</div>
+          </div>
+        </div>
+        
+        {% if return_request.admin_note %}
+          <div class="au-divider"></div>
+          <div class="small text-muted">{% trans "Admin note" %}</div>
+          <div class="p-2 rounded" style="background:#f5efe1">{{ return_request.admin_note|linebreaksbr }}</div>
+        {% endif %}
+        
+        {% if return_request.tracking_number %}
+          <div class="au-divider"></div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="small text-muted">{% trans "Carrier" %}</div>
+              <div class="fw-semibold">{{ return_request.carrier|default:"—" }}</div>
+            </div>
+            <div class="col-md-6">
+              <div class="small text-muted">{% trans "Tracking" %}</div>
+              <div class="fw-semibold">{{ return_request.tracking_number }}</div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="mg-card mb-4">
+      <div class="mg-card-head"><h5>{% trans "Actions" %}</h5></div>
+      <div class="mg-card-body">
+        {% if return_request.status == 'requested' %}
+          <form method="post" action="{% url 'dashboard:return_approve' return_request.pk %}" class="mb-3">
+            {% csrf_token %}
+            <div class="mg-field">
+              <label>{% trans "Note (optional)" %}</label>
+              <textarea name="note" class="form-control form-control-sm" rows="2" placeholder="{% trans "Internal note for customer" %}"></textarea>
+            </div>
+            <button class="mg-btn mg-btn-success w-100" type="submit">
+              <i class="bi bi-check-circle"></i> {% trans "Approve Return" %}
+            </button>
+          </form>
+          
+          <form method="post" action="{% url 'dashboard:return_reject' return_request.pk %}">
+            {% csrf_token %}
+            <div class="mg-field">
+              <label>{% trans "Rejection reason" %}</label>
+              <textarea name="note" class="form-control form-control-sm" rows="2" placeholder="{% trans "Reason for rejection" %}" required></textarea>
+            </div>
+            <button class="mg-btn mg-btn-danger w-100" type="submit">
+              <i class="bi bi-x-circle"></i> {% trans "Reject Return" %}
+            </button>
+          </form>
+        
+        {% elif return_request.status == 'approved' %}
+          <form method="post" action="{% url 'dashboard:return_receive' return_request.pk %}" class="mb-3"
+                data-confirm="{% trans "Mark return as received? This will trigger the refund." %}">
+            {% csrf_token %}
+            <div class="mg-field">
+              <label>{% trans "Carrier" %}</label>
+              <input type="text" name="carrier" class="form-control form-control-sm" placeholder="e.g. UPS, FedEx">
+            </div>
+            <div class="mg-field">
+              <label>{% trans "Tracking number" %}</label>
+              <input type="text" name="tracking_number" class="form-control form-control-sm" placeholder="Tracking number">
+            </div>
+            <div class="mg-field">
+              <label>{% trans "Note (optional)" %}</label>
+              <textarea name="note" class="form-control form-control-sm" rows="2" placeholder="{% trans "Internal note" %}"></textarea>
+            </div>
+            <button class="mg-btn mg-btn-primary w-100" type="submit">
+              <i class="bi bi-box-seam"></i> {% trans "Mark Received & Refund" %}
+            </button>
+          </form>
+        
+        {% elif return_request.status == 'received' %}
+          <div class="p-3 rounded" style="background:#e8f5e9;border:1px solid #c8e6c9">
+            <div class="text-success mb-1">{% trans "Items received — processing refund" %}</div>
+            <small class="text-muted">{% trans "Refund will be processed automatically." %}</small>
+          </div>
+        
+        {% elif return_request.status == 'refunded' %}
+          <div class="p-3 rounded" style="background:#e8f5e9;border:1px solid #c8e6c9">
+            <div class="text-success mb-1">{% trans "Refund completed" %}</div>
+            <small class="text-muted">{{ return_request.refunded_at|date:"M j, Y g:i A" }}</small>
+          </div>
+        
+        {% elif return_request.status == 'rejected' %}
+          <div class="p-3 rounded" style="background:#fef2f2;border:1px solid #fecaca">
+            <div class="text-danger mb-1">{% trans "Return rejected" %}</div>
+            <small class="text-muted">{% trans "Customer was notified." %}</small>
+          </div>
+        
+        {% elif return_request.status == 'cancelled' %}
+          <div class="p-3 rounded" style="background:#f3f4f6;border:1px solid #d1d5db">
+            <div class="text-muted mb-1">{% trans "Cancelled by customer" %}</div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mg-card mb-4">
+      <div class="mg-card-head"><h5>{% trans "Timeline" %}</h5></div>
+      <div class="mg-card-body">
+        <ul class="mg-timeline">
+          <li>
+            <b>{% trans "Requested" %}</b>
+            <div class="when">{{ return_request.created_at|date:"M j, Y g:i A" }}</div>
+          </li>
+          {% if return_request.approved_at %}
+            <li>
+              <b>{% trans "Approved" %}</b>
+              <div class="when">{{ return_request.approved_at|date:"M j, Y g:i A" }}</div>
+            </li>
+          {% endif %}
+          {% if return_request.received_at %}
+            <li>
+              <b>{% trans "Received" %}</b>
+              <div class="when">{{ return_request.received_at|date:"M j, Y g:i A" }}</div>
+            </li>
+          {% endif %}
+          {% if return_request.refunded_at %}
+            <li>
+              <b>{% trans "Refunded" %}</b> — {{ return_request.refund_amount|currency }}
+              <div class="when">{{ return_request.refunded_at|date:"M j, Y g:i A" }}</div>
+            </li>
+          {% endif %}
+          {% if return_request.status == 'rejected' %}
+            <li>
+              <b>{% trans "Rejected" %}</b>
+              <div class="when">{{ return_request.updated_at|date:"M j, Y g:i A" }}</div>
+            </li>
+          {% endif %}
+          {% if return_request.status == 'cancelled' %}
+            <li>
+              <b>{% trans "Cancelled" %}</b>
+              <div class="when">{{ return_request.updated_at|date:"M j, Y g:i A" }}</div>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

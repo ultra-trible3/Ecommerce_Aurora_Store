@@ -1,0 +1,66 @@
+{% load i18n %}
+<footer class="au-footer">
+  <div class="container-xxl">
+    <div class="row g-4">
+      <div class="col-lg-4 col-md-6">
+        <a class="au-brand mb-3 d-inline-flex" href="{% url 'core:home' %}">
+          <span class="brand-mark"><i class="bi bi-bag-heart"></i></span>
+          {{ SITE_NAME }}
+        </a>
+        <p style="color:#e5d3af;max-width:340px">
+          {% blocktrans with tagline=SITE_TAGLINE %}{{ tagline }} A modern storefront built with Django — curated products,
+          secure checkout and support that actually responds.{% endblocktrans %}
+        </p>
+        <div class="au-social mt-3">
+          <a href="#" aria-label="{% trans 'Facebook' %}"><i class="bi bi-facebook"></i></a>
+          <a href="#" aria-label="{% trans 'Instagram' %}"><i class="bi bi-instagram"></i></a>
+          <a href="#" aria-label="{% trans 'X / Twitter' %}"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" aria-label="{% trans 'YouTube' %}"><i class="bi bi-youtube"></i></a>
+        </div>
+      </div>
+
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6>{% trans "Shop" %}</h6>
+        <a href="{% url 'catalog:shop' %}">{% trans "All products" %}</a>
+        <a href="{% url 'catalog:shop' %}?sort=newest">{% trans "New arrivals" %}</a>
+        <a href="{% url 'catalog:shop' %}?sort=discount">{% trans "Deals" %}</a>
+        <a href="{% url 'catalog:brands' %}">{% trans "Brands" %}</a>
+        <a href="{% url 'catalog:shop' %}?featured=1">{% trans "Featured" %}</a>
+      </div>
+
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6>{% trans "Customer service" %}</h6>
+        <a href="{% url 'orders:list' %}">{% trans "Track my order" %}</a>
+        <a href="{% url 'accounts:addresses' %}">{% trans "Shipping &amp; addresses" %}</a>
+        <a href="#">{% trans "Shipping policy" %}</a>
+        <a href="#">{% trans "Returns &amp; refunds" %}</a>
+        <a href="#">{% trans "FAQ" %}</a>
+      </div>
+
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6>{% trans "Company" %}</h6>
+        <a href="#">{% trans "About us" %}</a>
+        <a href="#">{% trans "Careers" %}</a>
+        <a href="#">{% trans "Privacy policy" %}</a>
+        <a href="#">{% trans "Terms of service" %}</a>
+        <a href="#">{% trans "Contact" %}</a>
+      </div>
+
+      <div class="col-lg-2 col-md-6 col-6">
+        <h6>{% trans "Contact" %}</h6>
+        <a href="mailto:{{ SUPPORT_EMAIL }}"><i class="bi bi-envelope me-2"></i>{{ SUPPORT_EMAIL }}</a>
+        <a href="tel:{{ SUPPORT_PHONE }}"><i class="bi bi-telephone me-2"></i>{{ SUPPORT_PHONE }}</a>
+        <span class="d-block py-2"><i class="bi bi-geo-alt me-2"></i>{% trans "128 Market St, Suite 400" %}</span>
+        <span class="d-block"><i class="bi bi-clock me-2"></i>{% trans "Mon–Sat, 9am–7pm" %}</span>
+      </div>
+    </div>
+
+    <div class="au-footer-bottom d-flex justify-content-between flex-wrap gap-3">
+      <span>{% blocktrans with site=SITE_NAME %}&copy; {{ site }}. All rights reserved.{% endblocktrans %}</span>
+      <span class="d-flex gap-3">
+        <a href="#" class="d-inline"><i class="bi bi-shield-check me-1"></i>{% trans "Secure payments" %}</a>
+        <a href="#" class="d-inline"><i class="bi bi-truck me-1"></i>{% trans "Worldwide shipping" %}</a>
+      </span>
+    </div>
+  </div>
+</footer>

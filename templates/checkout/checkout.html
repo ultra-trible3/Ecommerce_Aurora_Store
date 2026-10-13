@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% trans "Checkout" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <h1 class="h4 mb-1">{% trans "Secure checkout" %}</h1>
+        <p class="text-muted mb-0">{% trans "All prices are re-verified on our server before you pay." %}</p>
+      </div>
+      <span class="badge bg-success-subtle text-success"><i class="bi bi-lock"></i> {% trans "SSL secured" %}</span>
+    </div>
+
+    <form method="post" action="{% url 'checkout:place' %}" id="checkout-form" novalidate>
+      {% csrf_token %}
+      <input type="hidden" name="idempotency_key" value="{{ idempotency_key }}">
+
+      <ul class="au-steps" id="checkout-steps">
+        <li data-step="1" class="done">{% trans "Cart" %}</li>
+        <li data-step="2" class="current">{% trans "Information" %}</li>
+        <li data-step="3">{% trans "Address" %}</li>
+        <li data-step="4">{% trans "Delivery" %}</li>
+        <li data-step="5">{% trans "Payment" %}</li>
+        <li data-step="6">{% trans "Review" %}</li>
+      </ul>
+
+      <div class="row g-4">
+        <div class="col-lg-7">
+          {% if form.non_field_errors %}
+            <div class="au-alert mb-3" style="background:#fef2f2;color:#991b1b;border-color:#fecaca">
+              <i class="bi bi-exclamation-circle-fill"></i>
+              <div>{{ form.non_field_errors|first }}</div>
+            </div>
+          {% endif %}
+
+          <!-- STEP 2: customer info -->
+          <fieldset class="checkout-step au-card p-4 mb-3" data-step="2">
+            <h5 class="mb-3"><span class="badge bg-primary-subtle text-primary me-2">1</span> {% trans "Contact information" %}</h5>
+            {% if not user.is_authenticated %}
+              {% url 'accounts:login' as login_url %}
+              <p class="small text-muted">{% blocktrans %}Already have an account? <a href="{{ login_url }}?next=/checkout/">Sign in</a> to autofill everything.{% endblocktrans %}</p>
+            {% endif %}
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.email.id_for_label }}">{% trans "Email" %}</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors|first }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.phone.id_for_label }}">{% trans "Phone" %}</label>
+                {{ form.phone }}
+                {% if form.phone.errors %}<div class="invalid-feedback d-block">{{ form.phone.errors|first }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="{{ form.full_name.id_for_label }}">{% trans "Full name" %}</label>
+                {{ form.full_name }}
+                {% if form.full_name.errors %}<div class="invalid-feedback d-block">{{ form.full_name.errors|first }}</div>{% endif %}
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- STEP 3: shipping address -->
+          <fieldset class="checkout-step au-card p-4 mb-3" data-step="3">
+            <h5 class="mb-3"><span class="badge bg-primary-subtle text-primary me-2">2</span> {% trans "Shipping address" %}</h5>
+
+            {% if saved_addresses %}
+              <div class="mb-3">
+                <label class="form-label">{% trans "Use a saved address" %}</label>
+                <div class="d-grid gap-2">
+                  {% for a in saved_addresses %}
+                    <label class="au-pay-option">
+                      <input type="radio" name="saved_address" value="{{ a.pk }}" class="form-check-input mt-1"
+                             data-full_name="{{ a.full_name }}" data-phone="{{ a.phone }}"
+                             data-line1="{{ a.address_line1 }}" data-line2="{{ a.address_line2 }}"
+                             data-city="{{ a.city }}" data-state="{{ a.state }}"
+                             data-country="{{ a.country }}" data-postal="{{ a.postal_code }}">
+                      <span>
+                        <b>{{ a.full_name }}</b>
+                        <span>{{ a.as_line }}</span>
+                      </span>
+                    </label>
+                  {% endfor %}
+                  <label class="au-pay-option active">
+                    <input type="radio" name="saved_address" value="" class="form-check-input mt-1" checked>
+                    <span><b>{% trans "Use a new address" %}</b><span>{% trans "Type the delivery details below" %}</span></span>
+                  </label>
+                </div>
+              </div>
+            {% endif %}
+
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label" for="{{ form.address_line1.id_for_label }}">{% trans "Address line 1" %}</label>
+                {{ form.address_line1 }}
+                {% if form.address_line1.errors %}<div class="invalid-feedback d-block">{{ form.address_line1.errors|first }}</div>{% endif %}
+              </div>
+              <div class="col-12">
+                <label class="form-label" for="{{ form.address_line2.id_for_label }}">{% trans "Address line 2" %} <span class="text-muted">{% trans "(optional)" %}</span></label>
+                {{ form.address_line2 }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.city.id_for_label }}">{% trans "City" %}</label>
+                {{ form.city }}
+                {% if form.city.errors %}<div class="invalid-feedback d-block">{{ form.city.errors|first }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.postal_code.id_for_label }}">{% trans "Postal code" %}</label>
+                {{ form.postal_code }}
+                {% if form.postal_code.errors %}<div class="invalid-feedback d-block">{{ form.postal_code.errors|first }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.state.id_for_label }}">{% trans "State / Province" %} <span class="text-muted">{% trans "(optional)" %}</span></label>
+                {{ form.state }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.country.id_for_label }}">{% trans "Country" %}</label>
+                {{ form.country }}
+                {% if form.country.errors %}<div class="invalid-feedback d-block">{{ form.country.errors|first }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="form-check mt-3">
+              {{ form.same_as_shipping }}
+              <label class="form-check-label" for="{{ form.same_as_shipping.id_for_label }}">
+                {% trans "Billing address is the same as shipping" %}
+              </label>
+            </div>
+
+            <div id="billing-fields" class="row g-3 mt-1 d-none">
+              <div class="col-12">
+                <label class="form-label" for="{{ form.billing_full_name.id_for_label }}">{% trans "Billing name" %}</label>
+                {{ form.billing_full_name }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.billing_address_line1.id_for_label }}">{% trans "Billing address" %}</label>
+                {{ form.billing_address_line1 }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.billing_city.id_for_label }}">{% trans "City" %}</label>
+                {{ form.billing_city }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.billing_postal_code.id_for_label }}">{% trans "Postal code" %}</label>
+                {{ form.billing_postal_code }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.billing_country.id_for_label }}">{% trans "Country" %}</label>
+                {{ form.billing_country }}
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- STEP 4: shipping method -->
+          <fieldset class="checkout-step au-card p-4 mb-3" data-step="4">
+            <h5 class="mb-3"><span class="badge bg-primary-subtle text-primary me-2">3</span> {% trans "Delivery method" %}</h5>
+            <div class="d-grid gap-2">
+              {% for radio in form.shipping_method %}
+                <label class="au-pay-option shipping-option" data-code="{{ radio.data.value }}">
+                  {{ radio.tag }}
+                  <span>
+                    <b>{{ radio.choice_label }}</b>
+                    <span>
+                      {% for m in shipping_methods %}
+                        {% if m.code == radio.data.value %}
+                          {% if m.description %}{{ m.description }}{% else %}{% trans "Standard delivery" %}{% endif %}
+                        {% endif %}
+                      {% endfor %}
+                    </span>
+                  </span>
+                  <span class="ms-auto fw-bold text-ink">
+                    {% for m in shipping_methods %}
+                      {% if m.code == radio.data.value %}
+                        {% if m.free_over %}<span class="small text-success d-block">{% blocktrans with free_over=m.free_over|currency %}Free over {{ free_over }}{% endblocktrans %}</span>{% endif %}
+                        {{ m.cost|currency }}
+                      {% endif %}
+                    {% endfor %}
+                  </span>
+                </label>
+              {% endfor %}
+            </div>
+            {% if form.shipping_method.errors %}
+              <div class="invalid-feedback d-block">{{ form.shipping_method.errors|first }}</div>
+            {% endif %}
+          </fieldset>
+
+          <!-- STEP 5: payment -->
+          <fieldset class="checkout-step au-card p-4 mb-3" data-step="5">
+            <h5 class="mb-3"><span class="badge bg-primary-subtle text-primary me-2">4</span> {% trans "Payment" %}</h5>
+            <div class="d-grid gap-2">
+              {% for radio in form.payment_method %}
+                <label class="au-pay-option">
+                  {{ radio.tag }}
+                  <span>
+                    <b>{{ radio.choice_label }}</b>
+                    <span>
+                      {% if radio.data.value == 'cod' %}{% trans "Pay the courier when your order arrives." %}
+                      {% elif radio.data.value == 'stripe' %}{% trans "Encrypted card payment — we never store card details." %}
+                      {% else %}{% trans "You will be redirected to PayPal to approve the payment." %}
+                      {% endif %}
+                    </span>
+                  </span>
+                </label>
+              {% endfor %}
+            </div>
+
+            <div class="mt-4">
+              <label class="form-label" for="{{ form.coupon_code.id_for_label }}">{% trans "Coupon code" %}</label>
+              <div class="d-flex gap-2">
+                {{ form.coupon_code }}
+                <button class="btn btn-outline-secondary" type="button" id="apply-coupon-echo">
+                  <i class="bi bi-tag"></i> {% trans "Applied in cart" %}
+                </button>
+              </div>
+              {% if coupon %}
+                <div class="form-text text-success">
+                  <i class="bi bi-check-circle"></i> {{ coupon.code }} — {{ coupon.discount_label }}
+                </div>
+              {% endif %}
+            </div>
+          </fieldset>
+
+          <!-- STEP 6: review + place -->
+          <fieldset class="checkout-step au-card p-4 mb-3" data-step="6">
+            <h5 class="mb-3"><span class="badge bg-primary-subtle text-primary me-2">5</span> {% trans "Review & place order" %}</h5>
+
+            <!-- Itemised order details -->
+            <div class="au-order-review mb-3">
+              <ul class="au-order-review-list">
+                {% for item in cart.items.all %}
+                  <li class="au-order-review-item">
+                    <div class="au-order-review-thumb">
+                      {% if item.image_url %}<img src="{{ item.image_url }}" alt="">{% endif %}
+                    </div>
+                    <div class="au-order-review-info">
+                      <div class="au-order-review-name text-truncate">{{ item.display_name }}</div>
+                      <div class="au-order-review-price">
+                        <span class="badge bg-dark me-1">×{{ item.quantity }}</span>{% blocktrans with price=item.unit_price|currency %}{{ price }} each{% endblocktrans %}
+                      </div>
+                    </div>
+                    <div class="au-order-review-total">{{ item.line_total|currency }}</div>
+                  </li>
+                {% empty %}
+                  <li class="au-order-review-item">
+                    <div class="au-order-review-info text-muted small">{% trans "Your cart is empty." %}</div>
+                  </li>
+                {% endfor %}
+              </ul>
+
+              <div class="au-order-review-foot">
+                <div class="au-order-review-line">
+                  <span>{% blocktrans count count=cart.items.all|length %}{{ count }} item{% plural %}{{ count }} items{% endblocktrans %}</span>
+                  <span>{{ totals.subtotal|currency }}</span>
+                </div>
+                {% if totals.discount %}
+                  <div class="au-order-review-line discount">
+                    <span>{% if coupon %}{% blocktrans with code=coupon.code %}Discount ({{ code }}){% endblocktrans %}{% else %}{% trans "Discount" %}{% endif %}</span>
+                    <span>−{{ totals.discount|currency }}</span>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="{{ form.notes.id_for_label }}">{% trans "Order notes" %} <span class="text-muted">{% trans "(optional)" %}</span></label>
+              {{ form.notes }}
+            </div>
+
+            <div class="small text-muted mb-3">
+              <i class="bi bi-shield-check text-success"></i>
+              {% trans "By placing this order you agree to our terms of service and privacy policy." %}
+            </div>
+
+            <button class="btn btn-primary btn-lg w-100" type="submit" id="place-order-btn">
+              <i class="bi bi-lock"></i> {% blocktrans with total=totals.total|currency %}Place order — {{ total }}{% endblocktrans %}
+            </button>
+            <p class="small text-center text-muted mt-2 mb-0">
+              {% trans "You will see a final confirmation before any payment is captured." %}
+            </p>
+          </fieldset>
+
+          <div class="d-flex justify-content-between gap-2 mt-3">
+            <button class="btn btn-outline-secondary" type="button" id="step-prev" disabled>
+              <i class="bi bi-arrow-left"></i> {% trans "Back" %}
+            </button>
+            <button class="btn btn-primary" type="button" id="step-next">
+              {% trans "Continue" %} <i class="bi bi-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="col-lg-5">
+          <div class="au-summary">
+            <h5 class="mb-3">{% trans "Your order" %}</h5>
+
+            <div class="d-grid gap-2 mb-3" style="max-height:280px;overflow:auto">
+              {% for item in cart.items.all %}
+                <div class="d-flex gap-2 align-items-center">
+                  <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;background:var(--au-bg-alt);position:relative;flex-shrink:0">
+                    {% if item.image_url %}<img src="{{ item.image_url }}" alt="" style="width:100%;height:100%;object-fit:cover">{% endif %}
+                    <span class="badge bg-dark position-absolute" style="top:-6px;right:-6px">{{ item.quantity }}</span>
+                  </div>
+                  <div class="flex-grow-1" style="min-width:0">
+                    <div class="small text-truncate text-ink fw-semibold">{{ item.display_name }}</div>
+                    <div class="small text-muted">{% blocktrans with price=item.unit_price|currency %}{{ price }} each{% endblocktrans %}</div>
+                  </div>
+                  <div class="small fw-bold text-ink">{{ item.line_total|currency }}</div>
+                </div>
+              {% endfor %}
+            </div>
+
+            <div class="au-divider"></div>
+            <div class="line"><span>{% trans "Subtotal" %}</span><span>{{ totals.subtotal|currency }}</span></div>
+            {% if totals.discount %}
+              <div class="line discount">
+                <span>{% if coupon %}{% blocktrans with code=coupon.code %}Discount ({{ code }}){% endblocktrans %}{% else %}{% trans "Discount" %}{% endif %}</span>
+                <span>−{{ totals.discount|currency }}</span>
+              </div>
+            {% endif %}
+            <div class="line"><span>{% trans "Shipping" %}</span><span id="summary-shipping">{% trans "Selected in next step" %}</span></div>
+            <div class="line"><span>{% trans "Tax" %}</span><span id="summary-tax">{% trans "Calculated" %}</span></div>
+            <div class="line total"><span>{% trans "Total" %}</span><span id="summary-total">{{ totals.total|currency }}</span></div>
+
+            <div class="small text-muted mt-3">
+              <div class="d-flex gap-2 mb-1"><i class="bi bi-truck text-primary"></i> {% trans "Free shipping over $75" %}</div>
+              <div class="d-flex gap-2 mb-1"><i class="bi bi-arrow-repeat text-primary"></i> {% trans "30-day returns" %}</div>
+              <div class="d-flex gap-2"><i class="bi bi-shield-check text-primary"></i> {% trans "Buyer protection included" %}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const form = document.getElementById("checkout-form");
+  const steps = Array.from(document.querySelectorAll(".checkout-step"));
+  const stepNav = Array.from(document.querySelectorAll("#checkout-steps li"));
+  const prevBtn = document.getElementById("step-prev");
+  const nextBtn = document.getElementById("step-next");
+  let current = 2;
+
+  function show(step) {
+    current = Math.min(Math.max(step, 2), 6);
+    steps.forEach((fs) => {
+      fs.classList.toggle("d-none", parseInt(fs.dataset.step, 10) !== current);
+    });
+    stepNav.forEach((li) => {
+      const n = parseInt(li.dataset.step, 10);
+      li.classList.toggle("done", n < current);
+      li.classList.toggle("current", n === current);
+    });
+    prevBtn.disabled = current === 2;
+    nextBtn.classList.toggle("d-none", current === 6);
+    const label = {2:"Information",3:"Address",4:"Delivery",5:"Payment",6:"Review"}[current];
+    if (label) history.replaceState(null, "", "#step-" + label.toLowerCase());
+    window.scrollTo({top: 0, behavior: "smooth"});
+  }
+
+  function validateStep(step) {
+    const fs = document.querySelector('.checkout-step[data-step="' + step + '"]');
+    if (!fs) return true;
+    const fields = fs.querySelectorAll("input[required], select[required], textarea[required], input[type=email]");
+    let ok = true;
+    fields.forEach((el) => {
+      if (el.type === "hidden") return;
+      const valid = el.checkValidity();
+      el.classList.toggle("is-invalid", !valid);
+      if (!valid && ok) { el.focus(); ok = false; }
+    });
+    return ok;
+  }
+
+  function validateAllSteps() {
+    for (let s = 2; s <= 6; s++) {
+      if (!validateStep(s)) return false;
+    }
+    return true;
+  }
+
+  nextBtn.addEventListener("click", () => {
+    if (validateStep(current)) show(current + 1);
+    else window.showToast(t("Missing details"), t("Please complete the highlighted fields."), "error");
+  });
+  prevBtn.addEventListener("click", () => show(current - 1));
+
+  form.addEventListener("submit", (e) => {
+    if (!validateAllSteps()) {
+      e.preventDefault();
+      window.showToast(t("Missing details"), t("Please complete the highlighted fields."), "error");
+    } else {
+      // Prevent duplicate submissions (defense in depth)
+      const btn = document.getElementById("place-order-btn");
+      if (btn && !btn.disabled) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> ' + t("Processing...");
+      }
+    }
+  });
+
+  // Saved address autofill
+  form.querySelectorAll('input[name="saved_address"]').forEach((radio) => {
+    radio.addEventListener("change", function () {
+      form.querySelectorAll(".au-pay-option").forEach((o) => o.classList.remove("active"));
+      this.closest(".au-pay-option").classList.add("active");
+      if (!this.value) return;
+      const map = {
+        full_name: this.dataset.full_name,
+        phone: this.dataset.phone,
+        address_line1: this.dataset.line1,
+        address_line2: this.dataset.line2,
+        city: this.dataset.city,
+        state: this.dataset.state,
+        country: this.dataset.country,
+        postal_code: this.dataset.postal,
+      };
+      Object.entries(map).forEach(([name, value]) => {
+        const el = form.querySelector('[name="' + name + '"]');
+        if (el && value) el.value = value;
+      });
+    });
+  });
+
+  // Shipping / payment option visuals
+  form.querySelectorAll(".au-pay-option input[type=radio]").forEach((radio) => {
+    radio.addEventListener("change", function () {
+      const name = this.name;
+      form.querySelectorAll('input[name="' + name + '"]').forEach((r) => {
+        r.closest(".au-pay-option")?.classList.remove("active");
+      });
+      this.closest(".au-pay-option")?.classList.add("active");
+      if (name === "shipping_method") refreshTotals();
+    });
+  });
+
+  // Billing toggle
+  const sameBox = document.getElementById("{{ form.same_as_shipping.id_for_label }}");
+  function toggleBilling() {
+    const box = document.getElementById("billing-fields");
+    if (box) box.classList.toggle("d-hidden", sameBox && sameBox.checked);
+    if (box) box.classList.toggle("d-none", !(sameBox && !sameBox.checked));
+  }
+  if (sameBox) { sameBox.addEventListener("change", toggleBilling); toggleBilling(); }
+
+  // Live-ish totals when shipping method changes
+  function refreshTotals() {
+    const selected = form.querySelector('input[name="shipping_method"]:checked');
+    if (!selected) return;
+    fetch("{% url 'checkout:start' %}?quote=1&method=" + encodeURIComponent(selected.value), {headers: {"X-Requested-With": "XMLHttpRequest"}})
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (!data) return;
+        const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+        set("summary-shipping", data.shipping);
+        set("summary-tax", data.tax);
+        set("summary-total", data.total);
+        const btn = document.getElementById("place-order-btn");
+        if (btn) btn.innerHTML = '<i class="bi bi-lock"></i> ' + ts("Place order — %s", data.total);
+      })
+      .catch(() => {});
+  }
+  refreshTotals();
+
+  // Show validation errors from the server inline
+  document.addEventListener("DOMContentLoaded", () => {
+    form.querySelectorAll(".is-invalid").forEach((el) => {
+      const step = el.closest(".checkout-step");
+      if (step) show(parseInt(step.dataset.step, 10));
+    });
+  });
+})();
+</script>
+{% endblock %}

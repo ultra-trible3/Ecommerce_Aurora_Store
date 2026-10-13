@@ -1,0 +1,53 @@
+{% load i18n %}
+<div class="au-card p-3">
+  <div class="d-flex align-items-center gap-3 px-2 pb-3 mb-2 border-bottom">
+    <span class="au-avatar lg">
+      {% if user.profile_image %}<img src="{{ user.profile_image.url }}" alt="">{% else %}{{ user.initials }}{% endif %}
+    </span>
+    <div style="min-width:0">
+      <b class="d-block text-ink text-truncate">{{ user.get_full_name|default:user.username }}</b>
+      <span class="small text-muted text-truncate d-block">{{ user.email }}</span>
+      {% if user.email_verified %}
+        <span class="badge bg-success-subtle text-success mt-1"><i class="bi bi-patch-check"></i> {% trans "Verified" %}</span>
+      {% else %}
+        <span class="badge bg-warning-subtle text-warning mt-1"><i class="bi bi-clock"></i> {% trans "Unverified" %}</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <nav class="au-account-nav d-flex flex-column gap-1">
+    <a href="{% url 'accounts:dashboard' %}" class="{% if nav == 'dashboard' %}active{% endif %}">
+      <i class="bi bi-grid"></i> {% trans "Overview" %}
+    </a>
+    <a href="{% url 'orders:list' %}" class="{% if nav == 'orders' %}active{% endif %}">
+      <i class="bi bi-box-seam"></i> {% trans "Orders" %}
+    </a>
+    <a href="{% url 'accounts:profile' %}" class="{% if nav == 'profile' %}active{% endif %}">
+      <i class="bi bi-person"></i> {% trans "Profile" %}
+    </a>
+    <a href="{% url 'accounts:addresses' %}" class="{% if nav == 'addresses' %}active{% endif %}">
+      <i class="bi bi-geo-alt"></i> {% trans "Addresses" %}
+    </a>
+    <button type="button" class="w-100 text-start" data-drawer-open data-drawer-key="wishlist" data-drawer-url="{% url 'wishlist:mini' %}" aria-controls="au-drawer" aria-expanded="false">
+      <i class="bi bi-heart"></i> {% trans "Wishlist" %}
+    </button>
+    <a href="{% url 'notifications:list' %}" class="{% if nav == 'notifications' %}active{% endif %}">
+      <i class="bi bi-bell"></i> {% trans "Notifications" %}
+    </a>
+    <a href="{% url 'accounts:change_password' %}" class="{% if nav == 'password' %}active{% endif %}">
+      <i class="bi bi-key"></i> {% trans "Password" %}
+    </a>
+    {% if user.is_management %}
+      <a href="{% url 'dashboard:home' %}" class="text-primary">
+        <i class="bi bi-speedometer2"></i> {% trans "Management portal" %}
+      </a>
+    {% endif %}
+  </nav>
+
+  <form method="post" action="{% url 'accounts:logout' %}" class="mt-2 pt-2 border-top">
+    {% csrf_token %}
+    <button class="btn btn-sm btn-outline-secondary w-100" type="submit">
+      <i class="bi bi-box-arrow-right"></i> {% trans "Sign out" %}
+    </button>
+  </form>
+</div>

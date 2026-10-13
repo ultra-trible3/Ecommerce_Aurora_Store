@@ -1,0 +1,112 @@
+{% load i18n static %}
+<aside class="mg-sidebar">
+  <div class="mg-side-head">
+    <a class="mg-brand d-flex align-items-center gap-2" href="{% url 'dashboard:home' %}">
+      <img src="{% static 'images/logo.png' %}" alt="{{ SITE_NAME }}" class="brand-logo" style="height: 36px; width: auto;">
+      <span class="brand-text">{{ SITE_NAME }}</span>
+    </a>
+    <button class="mg-side-toggle" id="mg-side-toggle" type="button"
+            aria-label="{% trans 'Toggle navigation' %}" title="{% trans 'Toggle navigation' %}">
+      <i class="bi bi-list"></i>
+    </button>
+  </div>
+
+  <nav class="mg-nav">
+    <div class="mg-label">{% trans "Overview" %}</div>
+    <a href="{% url 'dashboard:home' %}" class="{% if nav == 'home' %}active{% endif %}">
+      <i class="bi bi-grid-1x2"></i> {% trans "Dashboard" %}
+    </a>
+
+    {% if perms.catalog.view_product or perms.catalog.view_category or perms.catalog.view_brand %}
+      <div class="mg-label">{% trans "Catalog" %}</div>
+      {% if perms.catalog.view_product %}
+        <a href="{% url 'dashboard:products' %}" class="{% if nav == 'products' %}active{% endif %}">
+          <i class="bi bi-box-seam"></i> {% trans "Products" %}
+        </a>
+      {% endif %}
+      {% if perms.catalog.view_category %}
+        <a href="{% url 'dashboard:categories' %}" class="{% if nav == 'categories' %}active{% endif %}">
+          <i class="bi bi-tags"></i> {% trans "Categories" %}
+        </a>
+      {% endif %}
+      {% if perms.catalog.view_brand %}
+        <a href="{% url 'dashboard:brands' %}" class="{% if nav == 'brands' %}active{% endif %}">
+          <i class="bi bi-bookmark"></i> {% trans "Brands" %}
+        </a>
+      {% endif %}
+    {% endif %}
+
+    {% if perms.orders.view_order or perms.accounts.view_user or perms.coupons.view_coupon or perms.banners.view_banner %}
+      <div class="mg-label">{% trans "Sales" %}</div>
+      {% if perms.orders.view_order %}
+        <a href="{% url 'dashboard:orders' %}" class="{% if nav == 'orders' %}active{% endif %}">
+          <i class="bi bi-receipt"></i> {% trans "Orders" %}
+        </a>
+      {% endif %}
+      {% if perms.accounts.view_user %}
+        <a href="{% url 'dashboard:customers' %}" class="{% if nav == 'customers' %}active{% endif %}">
+          <i class="bi bi-people"></i> {% trans "Customers" %}
+        </a>
+      {% endif %}
+      {% if perms.coupons.view_coupon %}
+        <a href="{% url 'dashboard:coupons' %}" class="{% if nav == 'coupons' %}active{% endif %}">
+          <i class="bi bi-ticket-perforated"></i> {% trans "Coupons" %}
+        </a>
+      {% endif %}
+      {% if perms.banners.view_banner %}
+        <a href="{% url 'dashboard:banners' %}" class="{% if nav == 'banners' %}active{% endif %}">
+          <i class="bi bi-image"></i> {% trans "Banners" %}
+        </a>
+      {% endif %}
+      {% if perms.orders.view_order %}
+        <a href="{% url 'dashboard:reports' %}" class="{% if nav == 'reports' %}active{% endif %}">
+          <i class="bi bi-graph-up-arrow"></i> {% trans "Reports" %}
+        </a>
+      {% endif %}
+    {% endif %}
+
+    {% if perms.inventory.view_stocktransaction or perms.reviews.view_review or perms.notifications.view_newslettersubscriber or perms.notifications.view_notification %}
+      <div class="mg-label">{% trans "Operations" %}</div>
+      {% if perms.inventory.view_stocktransaction %}
+        <a href="{% url 'dashboard:inventory' %}" class="{% if nav == 'inventory' %}active{% endif %}">
+          <i class="bi bi-clipboard-data"></i> {% trans "Inventory" %}
+        </a>
+      {% endif %}
+      {% if perms.reviews.view_review %}
+        <a href="{% url 'dashboard:reviews' %}" class="{% if nav == 'reviews' %}active{% endif %}">
+          <i class="bi bi-star"></i> {% trans "Reviews" %}
+          {% if pending_review_count %}
+            <span class="badge rounded-pill mg-badge-warn ms-auto">{{ pending_review_count }}</span>
+          {% endif %}
+        </a>
+      {% endif %}
+      {% if perms.notifications.view_newslettersubscriber %}
+        <a href="{% url 'dashboard:subscribers' %}" class="{% if nav == 'subscribers' %}active{% endif %}">
+          <i class="bi bi-envelope-paper"></i> {% trans "Subscribers" %}
+        </a>
+      {% endif %}
+      {% if perms.notifications.view_notification %}
+        <a href="{% url 'dashboard:notifications' %}" class="{% if nav == 'notifications' %}active{% endif %}">
+          <i class="bi bi-bell"></i> {% trans "Notifications" %}
+        </a>
+      {% endif %}
+    {% endif %}
+
+    {% if perms.notifications.change_setting or user.is_superuser %}
+      <div class="mg-label">{% trans "System" %}</div>
+      <a href="{% url 'dashboard:settings' %}" class="{% if nav == 'settings' %}active{% endif %}">
+        <i class="bi bi-sliders"></i> {% trans "Settings" %}
+      </a>
+      {% if user.is_superuser %}
+        <a href="{% url 'admin:index' %}" target="_blank">
+          <i class="bi bi-shield-lock"></i> {% trans "Django admin" %}
+        </a>
+      {% endif %}
+    {% endif %}
+  </nav>
+
+  <div class="mg-foot">
+    {{ SITE_NAME }} · v1.0<br>
+    {% trans "Signed in as" %} <b style="color:#e5d3af">{{ user.email }}</b>
+  </div>
+</aside>

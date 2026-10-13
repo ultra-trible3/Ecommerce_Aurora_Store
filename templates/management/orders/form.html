@@ -1,0 +1,40 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% blocktrans with number=order.order_number %}Edit {{ number }}{% endblocktrans %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:order_detail' order.order_number %}"><i class="bi bi-arrow-left"></i> {{ order.order_number }}</a>
+    <h1 class="mg-title mt-1">{% trans "Edit order" %}</h1>
+    <p class="mg-sub mb-0">{% trans "Customer contact, shipping address and notes. Totals and line items are managed separately." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:orders' %}"><i class="bi bi-arrow-left"></i> {% trans "Orders" %}</a>
+</div>
+
+<form method="post" class="mg-card" style="max-width:860px">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+    <div class="p-3 text-danger" style="font-size:14px">{{ form.non_field_errors }}</div>
+  {% endif %}
+  <div class="mg-card-body">
+    <div class="row g-3">
+      {% for field in form %}
+        <div class="{% if field.name == 'notes' or field.name == 'internal_notes' or field.name == 'shipping_address_line1' or field.name == 'shipping_address_line2' %}col-12{% else %}col-md-6{% endif %}">
+          <div class="mg-field mb-0">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {{ field.errors }}
+            {% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="d-flex gap-2 p-3 border-top">
+    <button class="mg-btn mg-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {% trans "Save changes" %}</button>
+    <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:order_detail' order.order_number %}">{% trans "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

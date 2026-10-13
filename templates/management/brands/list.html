@@ -1,0 +1,52 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Brands" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Brands" %}</h1>
+    <p class="mg-sub mb-0">{% trans "Brands power faceted search on the storefront." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:brand_create' %}"><i class="bi bi-plus-lg"></i> {% trans "New brand" %}</a>
+</div>
+
+<form class="mg-filterbar" method="get">
+  <div class="mg-search-inline">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="{% trans "Search brands…" %}">
+  </div>
+  <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Search" %}</button>
+</form>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr><th>{% trans "Name" %}</th><th>{% trans "Products" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          {% with b=row.brand %}
+            <tr>
+              <td class="fw-semibold">{{ b.name }}</td>
+              <td>{{ row.product_count }}</td>
+              <td><span class="mg-chip {% if b.is_active %}approved{% else %}rejected{% endif %}">{{ b.is_active|yesno:"Active,Hidden" }}</span></td>
+              <td class="text-end">
+                <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:brand_edit' b.pk %}">{% trans "Edit" %}</a>
+                <form method="post" action="{% url 'dashboard:brand_toggle' b.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button class="mg-btn mg-btn-ghost mg-btn-sm" type="submit">{{ b.is_active|yesno:"Hide,Show" }}</button>
+                </form>
+              </td>
+            </tr>
+          {% endwith %}
+        {% empty %}
+          <tr><td colspan="4"><div class="mg-empty"><i class="bi bi-bookmark"></i>{% trans "No brands yet." %}</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{{ meta_title }} | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% blocktrans with query=query site_name=SITE_NAME %}Search results for “{{ query }}” at {{ site_name }}.{% endblocktrans %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="container-xxl">{% include "includes/breadcrumbs.html" %}</div>
+{% endblock %}
+
+{% block content %}
+<section class="au-section pt-2">
+  <div class="container-xxl">
+    <div class="mb-4">
+      <h1 class="h3 mb-1">
+        {% if query %}
+          {% blocktrans with query=query %}Results for “<span class="text-primary">{{ query }}</span>”{% endblocktrans %}
+        {% else %}
+          {% trans "Search" %}
+        {% endif %}
+      </h1>
+      {% if query %}
+        <p class="text-muted mb-0">
+          {% blocktrans count counter=result_count %}{{ counter }} product found.{% plural %}{{ counter }} products found.{% endblocktrans %}
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-3">{% include "includes/shop_filters.html" %}</div>
+      <div class="col-lg-9">
+        {% include "includes/shop_toolbar.html" %}
+        {% if products %}
+          <div class="row g-3 g-md-4 mt-2">
+            {% for product in products %}
+              <div class="col-6 col-md-4">
+                {% include "includes/product_card.html" with product=product %}
+              </div>
+            {% endfor %}
+          </div>
+          <div class="mt-4">{% include "includes/pagination.html" with page_obj=page_obj %}</div>
+        {% elif query %}
+          {% trans "No matches" as empty_title %}
+          {% trans "We could not find anything for that search. Check the spelling or try a broader term." as empty_text %}
+          {% trans "Browse the shop" as empty_action %}
+          {% include "includes/empty_state.html" with icon="bi-search" title=empty_title text=empty_text action_url="/shop/" action_label=empty_action %}
+        {% else %}
+          <div class="au-empty">
+            <div class="glyph"><i class="bi bi-search"></i></div>
+            <h3>{% trans "What are you looking for?" %}</h3>
+            <p>{% trans "Type a product name, brand or SKU above — we will suggest as you type." %}</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

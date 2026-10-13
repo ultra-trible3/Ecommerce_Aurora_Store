@@ -1,0 +1,22 @@
+{% load i18n %}
+
+{% comment %}
+Single reusable empty-state block. Pass the copy in via ``include``:
+
+    {% include "includes/empty_state.html" with icon="bi-search" title="No results" text="Try another search." action_url="/shop/" action_label="Browse products" %}
+
+Only the block below is rendered — it must stay the sole output of this
+include, otherwise every page that uses it would show every empty state.
+{% endcomment %}
+
+{% trans "Nothing here yet" as default_title %}
+{% trans "When there is something to show, it will appear here." as default_text %}
+{% trans "Go back" as default_action %}
+<div class="au-empty">
+  <div class="glyph"><i class="bi {{ icon|default:'bi-inbox' }}"></i></div>
+  <h3>{{ title|default:default_title }}</h3>
+  <p>{{ text|default:default_text }}</p>
+  {% if action_url %}
+    <a class="btn btn-primary" href="{{ action_url }}">{{ action_label|default:default_action }}</a>
+  {% endif %}
+</div>

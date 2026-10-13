@@ -1,0 +1,265 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Sales Report" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:reports' %}"><i class="bi bi-arrow-left"></i> {% trans "Reports" %}</a>
+    <h1 class="mg-title mt-1">{% trans "Sales Report" %}</h1>
+    <p class="mg-sub mb-0">{{ date_from|date:"M j, Y" }} — {{ date_to|date:"M j, Y" }}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:reports_sales_pdf' %}?date_from={{ date_from }}&date_to={{ date_to }}">
+      <i class="bi bi-file-earmark-pdf"></i> {% trans "Download PDF" %}
+    </a>
+    <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:reports_export' %}?date_from={{ date_from }}&date_to={{ date_to }}">
+      <i class="bi bi-download"></i> {% trans "Export CSV" %}
+    </a>
+  </div>
+</div>
+
+<!-- Report Navigation Tabs -->
+<div class="mg-card mb-4">
+  {% include "management/reports/_tabs.html" with active="sales" %}
+</div>
+
+<!-- Date Range Selector -->
+<div class="mg-card mb-4">
+  <div class="mg-card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small">{% trans "From" %}</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">{% trans "To" %}</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <button class="mg-btn mg-btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> {% trans "Apply" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="mg-card mg-kpi kpi-wine h-100">
+      <div class="kpi-top">
+        <span class="kpi-label">{% trans "Total Revenue" %}</span>
+        <span class="kpi-icon"><i class="bi bi-cash-stack"></i></span>
+      </div>
+      <div class="kpi-value">{{ kpis.total_revenue|currency }}</div>
+      <div class="kpi-delta text-muted">{% trans "Paid: " %}{{ kpis.paid_revenue|currency }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="mg-card mg-kpi kpi-steel h-100">
+      <div class="kpi-top">
+        <span class="kpi-label">{% trans "Total Orders" %}</span>
+        <span class="kpi-icon"><i class="bi bi-receipt"></i></span>
+      </div>
+      <div class="kpi-value">{{ kpis.total_orders }}</div>
+      <div class="kpi-delta text-muted">{% trans "AOV: " %}{{ kpis.avg_order_value|currency }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="mg-card mg-kpi kpi-sand h-100">
+      <div class="kpi-top">
+        <span class="kpi-label">{% trans "Conversion Rate" %}</span>
+        <span class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></span>
+      </div>
+      <div class="kpi-value">{{ kpis.conversion_rate }}%</div>
+      <div class="kpi-delta text-muted">{% trans "Paid orders / Total orders" %}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="mg-card mg-kpi kpi-ink h-100">
+      <div class="kpi-top">
+        <span class="kpi-label">{% trans "Avg. Order Value" %}</span>
+        <span class="kpi-icon"><i class="bi bi-currency-dollar"></i></span>
+      </div>
+      <div class="kpi-value">{{ kpis.avg_order_value|currency }}</div>
+      <div class="kpi-delta text-muted">{% trans "Total Revenue / Orders" %}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Revenue Chart -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="mg-card h-100">
+      <div class="mg-card-head"><h5>{% trans "Daily Revenue" %}</h5></div>
+      <div class="mg-card-body">
+        <div class="mg-chart"><canvas id="revenueChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="mg-card h-100">
+      <div class="mg-card-head"><h5>{% trans "Payment Methods" %}</h5></div>
+      <div class="mg-card-body">
+        <div class="mg-chart"><canvas id="paymentChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Orders by Hour -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="mg-card h-100">
+      <div class="mg-card-head"><h5>{% trans "Orders by Hour" %}</h5></div>
+      <div class="mg-card-body">
+        <div class="mg-chart"><canvas id="hourlyChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="mg-card h-100">
+      <div class="mg-card-head"><h5>{% trans "Shipping Methods" %}</h5></div>
+      <div class="mg-card-body">
+        <div class="mg-chart"><canvas id="shippingChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Top Products Table -->
+<div class="mg-card">
+  <div class="mg-card-head"><h5>{% trans "Top Selling Products" %}</h5></div>
+  <div class="mg-card-body p-0">
+    <div class="table-responsive">
+      <table class="mg-table">
+        <thead>
+          <tr><th>{% trans "Product" %}</th><th>{% trans "SKU" %}</th><th class="text-end">{% trans "Units" %}</th><th class="text-end">{% trans "Revenue" %}</th></tr>
+        </thead>
+        <tbody>
+          {% for p in top_products %}
+            <tr>
+              <td>{{ p.items__product_name }}</td>
+              <td class="text-muted">{{ p.items__product_sku }}</td>
+              <td class="text-end">{{ p.units_sold }}</td>
+              <td class="text-end fw-bold">{{ p.revenue|currency }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4"><div class="mg-empty py-3">{% trans "No sales data." %}</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ daily_series|json_script:"revenue-data" }}
+{{ payment_breakdown|json_script:"payment-data" }}
+{{ shipping_breakdown|json_script:"shipping-data" }}
+{{ hourly_orders|json_script:"hourly-data" }}
+<script>
+  const CURRENCY = window.SITE_CURRENCY || "$";
+  const revenue = JSON.parse(document.getElementById("revenue-data").textContent);
+  const payments = JSON.parse(document.getElementById("payment-data").textContent);
+  const shipping = JSON.parse(document.getElementById("shipping-data").textContent);
+  const hourly = JSON.parse(document.getElementById("hourly-data").textContent);
+
+  function money(v) { return CURRENCY + Number(v).toLocaleString(); }
+
+  const PALETTE = {
+    wine: "#790d16", wineLight: "#a3252f", sand: "#e5d3af",
+    steel: "#5b7f96", steelLight: "#aec4d4", emerald: "#10b981",
+    amber: "#f59e0b", blue: "#3b82f6", red: "#ef4444",
+  };
+  const gridColor = "rgba(121, 13, 22, .14)";
+  const tickColor = "#7a6a62";
+
+  if (document.getElementById("revenueChart")) new Chart(document.getElementById("revenueChart"), {
+    type: "line",
+    data: {
+      labels: revenue.map(r => r.label),
+      datasets: [{
+        label: "{% trans "Revenue" %}",
+        data: revenue.map(r => r.revenue),
+        borderColor: PALETTE.wine, borderWidth: 2.5,
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
+          g.addColorStop(0, "rgba(121, 13, 22, .42)");
+          g.addColorStop(.55, "rgba(163, 37, 47, .18)");
+          g.addColorStop(1, "rgba(121, 13, 22, 0)");
+          return g;
+        },
+        fill: true, tension: .35, pointRadius: 3.5, pointHoverRadius: 6,
+        pointBackgroundColor: "#fff", pointBorderColor: PALETTE.wine, pointBorderWidth: 2.5,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => money(c.parsed.y) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: tickColor, maxRotation: 0, autoSkip: true } },
+        y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: (v) => CURRENCY + v } },
+      },
+    },
+  });
+
+  if (payments.length && document.getElementById("paymentChart")) {
+    const paymentColors = { cod: PALETTE.steel, stripe: PALETTE.wine, paypal: PALETTE.blue };
+    new Chart(document.getElementById("paymentChart"), {
+      type: "doughnut",
+      data: {
+        labels: payments.map(p => p.payment_method?.toUpperCase() || "UNKNOWN"),
+        datasets: [{
+          data: payments.map(p => p.revenue || 0),
+          backgroundColor: payments.map(p => paymentColors[p.payment_method] || PALETTE.sandDeep),
+          borderWidth: 3, borderColor: "#fff", hoverOffset: 8,
+        }],
+      },
+      options: {
+        maintainAspectRatio: false, cutout: "64%",
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "circle", color: "#4a3c36", font: { size: 11, weight: "600" } } } },
+      },
+    });
+  }
+
+  if (shipping.length && document.getElementById("shippingChart")) {
+    new Chart(document.getElementById("shippingChart"), {
+      type: "doughnut",
+      data: {
+        labels: shipping.map(s => s.shipping_method_name || "UNKNOWN"),
+        datasets: [{
+          data: shipping.map(s => s.revenue || 0),
+          backgroundColor: [PALETTE.wine, PALETTE.steel, PALETTE.sandDeep, PALETTE.steelLight, PALETTE.emerald, PALETTE.amber],
+          borderWidth: 3, borderColor: "#fff", hoverOffset: 8,
+        }],
+      },
+      options: {
+        maintainAspectRatio: false, cutout: "64%",
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "circle", color: "#4a3c36", font: { size: 11, weight: "600" } } } },
+      },
+    });
+  }
+
+  if (hourly.length && document.getElementById("hourlyChart")) new Chart(document.getElementById("hourlyChart"), {
+    type: "bar",
+    data: {
+      labels: hourly.map(h => new Date(h.hour).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})),
+      datasets: [{
+        label: "{% trans "Orders" %}",
+        data: hourly.map(h => h.count),
+        backgroundColor: PALETTE.wine,
+        borderRadius: 6, maxBarThickness: 30,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => c.parsed.y + " {% trans "orders" %}" } } },
+      scales: { x: { grid: { display: false }, ticks: { color: tickColor, maxRotation: 45 } }, y: { grid: { color: gridColor }, ticks: { color: tickColor, stepSize: 1, beginAtZero: true } } },
+    },
+  });
+</script>
+{% endblock %}

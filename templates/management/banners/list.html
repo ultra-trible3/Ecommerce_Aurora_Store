@@ -1,0 +1,177 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Banners" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:home' %}"><i class="bi bi-arrow-left"></i> {% trans "Dashboard" %}</a>
+    <h1 class="mg-title mt-1">{% trans "Banners & Advertisements" %}</h1>
+    <p class="mg-sub mb-0">{% trans "Manage hero banners with advanced targeting and scheduling" %}</p>
+  </div>
+  <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:banner_create' %}">
+    <i class="bi bi-plus"></i> {% trans "Create banner" %}
+  </a>
+</div>
+
+<!-- Filters -->
+<div class="mg-card mb-4">
+  <form class="mg-card-body" method="get">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">{% trans "Search" %}</label>
+        <input type="text" name="q" class="form-control" value="{{ q }}" placeholder="{% trans 'Title or slug...' %}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">{% trans "Status" %}</label>
+        <select name="state" class="form-select">
+          {% for value, label in state_choices %}
+            <option value="{{ value }}" {% if state_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">{% trans "Device" %}</label>
+        <select name="device" class="form-select">
+          <option value="">{% trans "All devices" %}</option>
+          {% for value, label in device_choices %}
+            <option value="{{ value }}" {% if device_filter == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="mg-btn mg-btn-primary w-100" type="submit">{% trans "Filter" %}</button>
+      </div>
+      <div class="col-md-3">
+        <a class="mg-btn mg-btn-ghost w-100" href="{% url 'dashboard:banners' %}">{% trans "Clear" %}</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Banner list -->
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr>
+          <th>{% trans "Preview" %}</th>
+          <th>{% trans "Title" %}</th>
+          <th>{% trans "Action" %}</th>
+          <th>{% trans "Device" %}</th>
+          <th>{% trans "Schedule" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Impressions" %}</th>
+          <th>{% trans "Clicks" %}</th>
+          <th>{% trans "CTR" %}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for banner in banners %}
+        <tr>
+          <td style="width:80px">
+            {% if banner.image %}
+            <img src="{{ banner.image.url }}" alt="" style="width:72px;height:36px;object-fit:cover;border-radius:6px">
+            {% endif %}
+          </td>
+          <td>
+            <a href="{% url 'dashboard:banner_edit' banner.pk %}" class="fw-semibold text-decoration-none">{{ banner.title }}</a>
+            <div class="small text-muted">{{ banner.slug }}</div>
+          </td>
+          <td>
+            <span class="mg-chip {% if banner.click_action == 'link' %}info{% else %}warning{% endif %}">
+              {{ banner.get_click_action_display }}
+            </span>
+            {% if banner.is_popup %}
+            <span class="mg-chip warning mt-1 d-inline-block"><i class="bi bi-megaphone"></i> {% trans "Popup" %}</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="mg-chip neutral">{{ banner.get_device_target_display }}</span>
+          </td>
+          <td class="small">
+            <div>{% trans "From" %}: {{ banner.valid_from|date:"M j, Y H:i" }}</div>
+            {% if banner.valid_until %}
+            <div class="text-muted">{% trans "Until" %}: {{ banner.valid_until|date:"M j, Y H:i" }}</div>
+            {% else %}
+            <div class="text-muted">{% trans "No end date" %}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if not banner.is_active %}
+              <span class="mg-chip danger">{% trans "Inactive" %}</span>
+            {% elif banner.is_expired %}
+              <span class="mg-chip danger">{% trans "Expired" %}</span>
+            {% elif not banner.is_started %}
+              <span class="mg-chip warning">{% trans "Scheduled" %}</span>
+            {% else %}
+              <span class="mg-chip success">{% trans "Active" %}</span>
+            {% endif %}
+          </td>
+          <td class="text-end">{{ banner.impressions|default:0 }}</td>
+          <td class="text-end">{{ banner.clicks|default:0 }}</td>
+          <td class="text-end">{{ banner.ctr|floatformat:2 }}%</td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:banner_edit' banner.pk %}" title="{% trans 'Edit' %}"><i class="bi bi-pencil"></i></a>
+              <button class="mg-btn mg-btn-ghost" onclick="previewBanner({{ banner.pk }})" title="{% trans 'Preview' %}"><i class="bi bi-eye"></i></button>
+              {% trans "Delete this banner?" as delete_confirm %}
+              <form method="post" action="{% url 'dashboard:banner_delete' banner.pk %}" class="d-inline" data-confirm="{{ delete_confirm }}">
+                {% csrf_token %}
+                <button class="mg-btn mg-btn-ghost text-danger" type="submit" title="{% trans 'Delete' %}"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10" class="text-center text-muted py-5">{% trans "No banners found." %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+  <nav class="mt-3" aria-label="Pagination">
+    <ul class="pagination justify-content-center mg-pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?{% querystring page=page_obj.previous_page_number %}">&laquo;</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+      {% endif %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <li class="page-item"><a class="page-link" href="?{% querystring page=num %}">{{ num }}</a></li>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?{% querystring page=page_obj.next_page_number %}">&raquo;</a></li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+</div>
+
+<!-- Preview Modal -->
+<div class="modal fade" id="previewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-fullscreen-md-down">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{% trans "Banner Preview" %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-0" id="previewContent"></div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

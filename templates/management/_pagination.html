@@ -1,0 +1,43 @@
+{% load i18n %}
+<nav class="mg-no-print mt-3" aria-label="{% trans 'Pagination' %}">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div class="text-muted" style="font-size:13px">
+      {% blocktrans with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}
+      · {% blocktrans count counter=page_obj.paginator.count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktrans %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+      <ul class="pagination mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if q %}q={{ q }}&amp;{% endif %}{% if status_filter %}status={{ status_filter }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">
+              <i class="bi bi-chevron-left"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+          {% if num == page_obj.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% elif num == 1 or num == page_obj.paginator.num_pages or num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+            <li class="page-item"><a class="page-link" href="?{% if q %}q={{ q }}&amp;{% endif %}{% if status_filter %}status={{ status_filter }}&amp;{% endif %}page={{ num }}">{{ num }}</a></li>
+          {% elif num == page_obj.number|add:"-3" or num == page_obj.number|add:"3" %}
+            <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if q %}q={{ q }}&amp;{% endif %}{% if status_filter %}status={{ status_filter }}&amp;{% endif %}page={{ page_obj.next_page_number }}">
+              <i class="bi bi-chevron-right"></i>
+            </a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-right"></i></span></li>
+        {% endif %}
+      </ul>
+    {% endif %}
+  </div>
+</nav>

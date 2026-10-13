@@ -1,0 +1,72 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Coupons" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Coupons" %}</h1>
+    <p class="mg-sub mb-0">{% trans "Discounts are validated server-side on every checkout." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:coupon_create' %}"><i class="bi bi-plus-lg"></i> {% trans "New coupon" %}</a>
+</div>
+
+<form class="mg-filterbar" method="get">
+  <div class="mg-search-inline">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% trans "Search code…" %}">
+  </div>
+  <select name="state" onchange="this.form.submit()">
+    <option value="">{% trans "All states" %}</option>
+    <option value="inactive" {% if request.GET.state == "inactive" %}selected{% endif %}>{% trans "Inactive only" %}</option>
+  </select>
+  <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Filter" %}</button>
+</form>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr><th>{% trans "Code" %}</th><th>{% trans "Discount" %}</th><th>{% trans "Validity" %}</th><th>{% trans "Usage" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          {% with c=row.obj %}
+            <tr>
+              <td>
+                <a href="{% url 'dashboard:coupon_edit' c.pk %}"><b>{{ c.code }}</b></a>
+                <div class="text-muted" style="font-size:12.5px">{{ c.description|default:"—" }}</div>
+              </td>
+              <td class="fw-semibold">{{ c.discount_label }}</td>
+              <td class="text-muted" style="font-size:13px">
+                {{ c.valid_from|date:"M j, Y" }}
+                → {% trans "no expiry" as no_expiry %}{{ c.valid_until|date:"M j, Y"|default:no_expiry }}
+              </td>
+              <td>{{ row.redemptions }}{% if c.usage_limit %} / {{ c.usage_limit }}{% endif %}</td>
+              <td>
+                <span class="mg-chip {% if c.is_active and not c.is_expired and not c.is_usage_exhausted %}approved{% else %}rejected{% endif %}">
+                  {% if not c.is_active %}{% trans "Inactive" %}{% elif c.is_expired %}{% trans "Expired" %}{% elif c.is_usage_exhausted %}{% trans "Exhausted" %}{% else %}{% trans "Active" %}{% endif %}
+                </span>
+              </td>
+              <td class="text-end">
+                <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:coupon_edit' c.pk %}">{% trans "Edit" %}</a>
+                <form method="post" action="{% url 'dashboard:coupon_delete' c.pk %}" class="d-inline"
+                      data-confirm="{% blocktrans with code=c.code %}Delete coupon {{ code }}?{% endblocktrans %}">
+                  {% csrf_token %}
+                  <button class="mg-btn mg-btn-danger mg-btn-sm" type="submit">{% trans "Delete" %}</button>
+                </form>
+              </td>
+            </tr>
+          {% endwith %}
+        {% empty %}
+          <tr><td colspan="6"><div class="mg-empty"><i class="bi bi-ticket-perforated"></i>{% trans "No coupons yet." %}</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "management/_pagination.html" with page_obj=page_obj q=q %}
+{% endblock %}

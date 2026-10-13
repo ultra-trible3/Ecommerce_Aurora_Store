@@ -1,0 +1,328 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% if mode == 'create' %}{% trans "New product" %}{% else %}{% trans "Edit product" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% if mode == 'create' %}{% trans "New product" %}{% else %}{% blocktrans with name=product.name %}Edit “{{ name }}”{% endblocktrans %}{% endif %}</h1>
+    <p class="mg-sub mb-0">{% trans "Prices and stock are always re-validated on the server." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:products' %}"><i class="bi bi-arrow-left"></i> {% trans "Back" %}</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="mg-card">
+  {% csrf_token %}
+  <div class="mg-card-body">
+    {% if form.non_field_errors %}
+      <div class="alert alert-danger">{{ form.non_field_errors|first }}</div>
+    {% endif %}
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.name_en.id_for_label }}">{% trans "Product name (English)" %}</label>
+              {{ form.name_en }}
+              {{ form.name_en.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.name_ar.id_for_label }}" lang="ar" dir="rtl">{% trans "Product name (Arabic)" %}</label>
+              {{ form.name_ar }}
+              {{ form.name_ar.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.sku.id_for_label }}">{% trans "SKU" %}</label>
+              {{ form.sku }}
+              {{ form.sku.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.slug.id_for_label }}">{% trans "Slug" %} <span class="text-muted">{% trans "(optional, generated from the English name)" %}</span></label>
+              {{ form.slug }}
+              {{ form.slug.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.category.id_for_label }}">{% trans "Category" %}</label>
+              {{ form.category }}
+              {{ form.category.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.brand.id_for_label }}">{% trans "Brand" %}</label>
+              {{ form.brand }}
+              {{ form.brand.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.short_description_en.id_for_label }}">{% trans "Short description (English)" %}</label>
+              {{ form.short_description_en }}
+              {{ form.short_description_en.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.short_description_ar.id_for_label }}" lang="ar" dir="rtl">{% trans "Short description (Arabic)" %}</label>
+              {{ form.short_description_ar }}
+              {{ form.short_description_ar.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.full_description_en.id_for_label }}">{% trans "Full description (English)" %}</label>
+              {{ form.full_description_en }}
+              {{ form.full_description_en.errors }}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="mg-field">
+              <label for="{{ form.full_description_ar.id_for_label }}" lang="ar" dir="rtl">{% trans "Full description (Arabic)" %}</label>
+              {{ form.full_description_ar }}
+              {{ form.full_description_ar.errors }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="mg-field">
+          <label for="{{ form.status.id_for_label }}">{% trans "Status" %}</label>
+          {{ form.status }}
+        </div>
+
+        <div class="row g-3">
+          <div class="col-6">
+            <div class="mg-field">
+              <label for="{{ form.price.id_for_label }}">{% trans "Price" %}</label>
+              {{ form.price }}
+              {{ form.price.errors }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mg-field">
+              <label for="{{ form.sale_price.id_for_label }}">{% trans "Sale price" %}</label>
+              {{ form.sale_price }}
+              {{ form.sale_price.errors }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mg-field">
+              <label for="{{ form.cost_price.id_for_label }}">{% trans "Cost" %}</label>
+              {{ form.cost_price }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mg-field">
+              <label for="{{ form.stock_quantity.id_for_label }}">{% trans "Stock" %}</label>
+              {{ form.stock_quantity }}
+              {{ form.stock_quantity.errors }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mg-field">
+              <label for="{{ form.min_stock_level.id_for_label }}">{% trans "Low-stock level" %}</label>
+              {{ form.min_stock_level }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="mg-field">
+              <label for="{{ form.weight.id_for_label }}">{% trans "Weight (kg)" %}</label>
+              {{ form.weight }}
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="mg-field">
+              <label for="{{ form.dimensions.id_for_label }}">{% trans "Dimensions" %}</label>
+              {{ form.dimensions }}
+            </div>
+          </div>
+        </div>
+
+        <div class="mg-field">
+          <label for="{{ form.main_image.id_for_label }}">{% trans "Main image" %}</label>
+          {{ form.main_image }}
+          {{ form.main_image.errors }}
+          {% if product and product.main_image %}
+            <div class="mt-2"><img src="{{ product.main_image.url }}" alt="" style="width:100%;border-radius:10px"></div>
+          {% endif %}
+        </div>
+
+        <div class="mg-field">
+          <label for="{{ form.gallery_images.id_for_label }}">{% trans "Gallery images" %}</label>
+          {{ form.gallery_images }}
+          {{ form.gallery_images.errors }}
+          {% if form.gallery_images.help_text %}
+            <div class="form-text">{{ form.gallery_images.help_text }}</div>
+          {% endif %}
+          {% if product %}
+            {% if product.images.all %}
+              <div class="form-text mt-2 mb-1">{% trans "Current album — tick to remove:" %}</div>
+              <div class="d-flex flex-wrap gap-2 mt-1">
+                {% for img in product.images.all %}
+                  <div class="text-center">
+                    <img src="{{ img.image.url }}" alt="" style="width:78px;height:78px;object-fit:cover;border-radius:8px;border:1px solid var(--au-border);display:block">
+                    <div class="form-check mt-1">
+                      <input class="form-check-input" type="checkbox" name="remove_gallery" value="{{ img.id }}" id="rm-img-{{ img.id }}">
+                      <label class="form-check-label small" for="rm-img-{{ img.id }}">{% trans "Remove" %}</label>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="form-text mt-2">{% trans "No gallery images yet." %}</div>
+            {% endif %}
+          {% endif %}
+        </div>
+
+        <div class="d-grid gap-2 mt-3">
+          {% for field in form %}
+            {% if field.field.widget.input_type == "checkbox" %}
+              <div class="form-check">
+                {{ field }}
+                <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    {% if color_formset %}
+      <hr class="my-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+          <h5 class="mb-1"><i class="bi bi-palette"></i> {% trans "Colours" %}</h5>
+          <p class="mg-sub mb-0">{% trans "Sell this product in several colours. Each colour is its own option with separate stock." %}</p>
+        </div>
+      </div>
+
+      {{ color_formset.management_form }}
+      {% if color_formset.non_form_errors %}
+        <div class="alert alert-danger">{{ color_formset.non_form_errors }}</div>
+      {% endif %}
+
+      <div id="color-rows" class="d-grid gap-2">
+        {% for f in color_formset %}
+          {{ f.variant_id }}
+          <div class="color-row row g-2 align-items-end p-3 rounded-3 border" style="background:var(--au-surface,#fff)">
+            <div class="col-auto">
+              <label class="form-label small mb-1" for="{{ f.color_hex.id_for_label }}">{% trans "Swatch" %}</label>
+              {{ f.color_hex }}
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label small mb-1" for="{{ f.name.id_for_label }}">{% trans "Colour name" %}</label>
+              {{ f.name }}
+              {{ f.name.errors }}
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label small mb-1" for="{{ f.stock_quantity.id_for_label }}">{% trans "Stock" %}</label>
+              {{ f.stock_quantity }}
+              {{ f.stock_quantity.errors }}
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label small mb-1" for="{{ f.price.id_for_label }}">{% trans "Price (optional)" %}</label>
+              {{ f.price }}
+              {{ f.price.errors }}
+            </div>
+            <div class="col-6 col-md-2">
+              <label class="form-label small mb-1" for="{{ f.sku.id_for_label }}">{% trans "SKU (optional)" %}</label>
+              {{ f.sku }}
+              {{ f.sku.errors }}
+            </div>
+            <div class="col-md-1 text-center">
+              <label class="form-label small mb-1 d-block">{% trans "Remove" %}</label>
+              {{ f.DELETE }}
+            </div>
+            {% if f.color_hex.errors %}<div class="col-12 text-danger small">{{ f.color_hex.errors }}</div>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+
+      <button type="button" class="mg-btn mg-btn-ghost mg-btn-sm mt-2" id="add-color-row">
+        <i class="bi bi-plus-lg"></i> {% trans "Add colour" %}
+      </button>
+
+      <template id="color-empty-template">
+        <div class="color-row row g-2 align-items-end p-3 rounded-3 border" style="background:var(--au-surface,#fff)">
+          <div class="col-auto">
+            <label class="form-label small mb-1">{% trans "Swatch" %}</label>
+            {{ color_formset.empty_form.color_hex }}
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label small mb-1">{% trans "Colour name" %}</label>
+            {{ color_formset.empty_form.name }}
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">{% trans "Stock" %}</label>
+            {{ color_formset.empty_form.stock_quantity }}
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">{% trans "Price (optional)" %}</label>
+            {{ color_formset.empty_form.price }}
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label small mb-1">{% trans "SKU (optional)" %}</label>
+            {{ color_formset.empty_form.sku }}
+          </div>
+          <div class="col-md-1 text-center">
+            <label class="form-label small mb-1 d-block">{% trans "Remove" %}</label>
+            {{ color_formset.empty_form.DELETE }}
+          </div>
+          {{ color_formset.empty_form.variant_id }}
+        </div>
+      </template>
+    {% endif %}
+  </div>
+
+  <div class="d-flex gap-2 p-3 border-top">
+    <button class="mg-btn mg-btn-primary" type="submit">
+      <i class="bi bi-check-lg"></i> {% if mode == 'create' %}{% trans "Create product" %}{% else %}{% trans "Save changes" %}{% endif %}
+    </button>
+    <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:products' %}">{% trans "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  "use strict";
+  var total = document.getElementById("id_colors-TOTAL_FORMS");
+  var addBtn = document.getElementById("add-color-row");
+  var container = document.getElementById("color-rows");
+  var tpl = document.getElementById("color-empty-template");
+  if (!total || !addBtn || !container || !tpl) return;
+
+  addBtn.addEventListener("click", function () {
+    var index = parseInt(total.value, 10) || 0;
+    var html = tpl.innerHTML.replace(/__prefix__/g, index);
+    var holder = document.createElement("div");
+    holder.innerHTML = html.trim();
+    var row = holder.firstElementChild;
+    container.appendChild(row);
+    total.value = index + 1;
+    var firstInput = row.querySelector('input[type="text"]');
+    if (firstInput) firstInput.focus();
+  });
+
+  // Grey out rows flagged for removal so it's clear they will be deleted.
+  container.addEventListener("change", function (event) {
+    var target = event.target;
+    if (!target || !target.name || target.name.indexOf("-DELETE") === -1) return;
+    var row = target.closest(".color-row");
+    if (row) row.style.opacity = target.checked ? "0.45" : "1";
+  });
+})();
+</script>
+{% endblock %}

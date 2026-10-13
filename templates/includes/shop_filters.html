@@ -1,0 +1,125 @@
+﻿{% load core_tags i18n %}
+<aside class="au-sidebar" id="shop-filters">
+  <form method="get" id="filter-form">
+    {% if request.GET.q %}<input type="hidden" name="q" value="{{ request.GET.q }}">{% endif %}
+    {% if request.GET.category %}<input type="hidden" name="category" value="{{ request.GET.category }}">{% endif %}
+    {% if request.GET.sort %}<input type="hidden" name="sort" value="{{ request.GET.sort }}">{% endif %}
+
+    <div class="group">
+      <h6>{% trans "Brands" %}</h6>
+      {% for b in brands %}
+        <label class="check">
+          <input class="form-check-input me-1" type="checkbox" name="brand" value="{{ b.slug }}"
+                 {% if b.slug in current_brand_list %}checked{% endif %}
+                 onchange="this.form.submit()">
+          <span>{{ b.name }}</span>
+          <span class="count">{{ b.product_count|default_if_none:0 }}</span>
+        </label>
+      {% empty %}
+        <span class="small text-muted">{% trans "No brands yet." %}</span>
+      {% endfor %}
+    </div>
+
+    <div class="group">
+      <h6>{% trans "Price" %}</h6>
+      <div class="au-price-inputs">
+        <input class="form-control" type="number" name="min_price" min="0"
+               placeholder="{% trans 'Min' %}" value="{{ request.GET.min_price|default:'' }}" step="1">
+        <span class="text-muted-2">–</span>
+        <input class="form-control" type="number" name="max_price" min="0"
+               placeholder="{% trans 'Max' %}" value="{{ request.GET.max_price|default:'' }}" step="1">
+      </div>
+      <div class="d-flex justify-content-between small text-muted mt-2">
+        <span>{{ price_min|currency }}</span><span>{{ price_max|currency }}</span>
+      </div>
+      <button class="btn btn-sm btn-soft w-100 mt-2" type="submit">{% trans "Apply price" %}</button>
+    </div>
+
+    <div class="group">
+      <h6>{% trans "Customer rating" %}</h6>
+      {% for r in "4321" %}
+        <label class="check">
+          <input class="form-check-input me-1" type="radio" name="rating" value="{{ r }}"
+                 {% if request.GET.rating == r %}checked{% endif %}
+                 onchange="this.form.submit()">
+          <span class="au-stars" style="font-size:.8rem">
+            {% for i in "12345" %}{% with n=i|add:0 %}{% if r|add:0 >= n %}<i class="bi bi-star-fill fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}{% endwith %}{% endfor %}
+          </span>
+          <span>{% trans "and up" %}</span>
+        </label>
+      {% endfor %}
+      {% if request.GET.rating %}
+        <button class="btn btn-sm btn-link p-0 mt-1" type="button"
+                onclick="const f=document.getElementById('filter-form');f.rating.forEach(r=>r.checked=false);f.submit()">
+          {% trans "Clear rating" %}
+        </button>
+      {% endif %}
+    </div>
+
+    {% if colors %}
+    <div class="group">
+      <h6>{% trans "Colour" %}</h6>
+      <div class="d-flex flex-wrap gap-2">
+        {% for c in colors %}
+          <label class="cursor-pointer text-center" title="{{ c.value }}">
+            <input type="radio" name="color" value="{{ c.pk }}" class="d-none"
+                   {% if request.GET.color == c.pk|stringformat:"s" %}checked{% endif %}
+                   onchange="this.form.submit()">
+            <span class="au-swatch d-inline-block {% if request.GET.color == c.pk|stringformat:"s" %}border-primary{% endif %}"
+                  style="background:{{ c.color_hex|default:'#aec4d4' }}"></span>
+            <span class="d-block" style="font-size:.62rem;color:var(--au-muted)">{{ c.value }}</span>
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if sizes %}
+    <div class="group">
+      <h6>{% trans "Size" %}</h6>
+      <div class="d-flex flex-wrap gap-2">
+        {% for s in sizes %}
+          <label class="au-variant {% if request.GET.size == s.pk|stringformat:"s" %}active{% endif %}">
+            <input type="radio" name="size" value="{{ s.pk }}" class="d-none"
+                   onchange="this.form.submit()">
+            {{ s.value }}
+          </label>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="group">
+      <h6>{% trans "Availability & offers" %}</h6>
+      <label class="check">
+        <input class="form-check-input me-1" type="checkbox" name="in_stock" value="1"
+               {% if request.GET.in_stock == '1' %}checked{% endif %} onchange="this.form.submit()">
+        <span>{% trans "In stock only" %}</span>
+      </label>
+      <label class="check">
+        <input class="form-check-input me-1" type="checkbox" name="sale" value="1"
+               {% if request.GET.sale == '1' %}checked{% endif %} onchange="this.form.submit()">
+        <span>{% trans "On sale" %}</span>
+      </label>
+      <label class="check">
+        <input class="form-check-input me-1" type="checkbox" name="featured" value="1"
+               {% if request.GET.featured == '1' %}checked{% endif %} onchange="this.form.submit()">
+        <span>{% trans "Featured" %}</span>
+      </label>
+      <label class="check">
+        <input class="form-check-input me-1" type="checkbox" name="new" value="1"
+               {% if request.GET.new == '1' %}checked{% endif %} onchange="this.form.submit()">
+        <span>{% trans "New arrivals" %}</span>
+      </label>
+    </div>
+
+    <div class="group d-grid gap-2">
+      <button class="btn btn-primary btn-sm" type="submit">
+        <i class="bi bi-funnel"></i> {% trans "Apply filters" %}
+      </button>
+      <a class="btn btn-sm btn-outline-secondary" href="{{ request.path }}">
+        <i class="bi bi-x-circle"></i> {% trans "Clear all" %}
+      </a>
+    </div>
+  </form>
+</aside>

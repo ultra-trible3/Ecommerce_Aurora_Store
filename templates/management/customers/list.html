@@ -1,0 +1,79 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Customers" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Customers" %}</h1>
+    <p class="mg-sub mb-0">{% blocktrans count counter=total %}{{ counter }} registered customer{% plural %}{{ counter }} registered customers{% endblocktrans %}.</p>
+  </div>
+</div>
+
+<form class="mg-filterbar" method="get">
+  <div class="mg-search-inline">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% trans "Search name or email…" %}">
+  </div>
+  <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Search" %}</button>
+</form>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr><th>{% trans "Customer" %}</th><th>{% trans "Joined" %}</th><th>{% trans "Orders" %}</th><th class="text-end">{% trans "Lifetime spend" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span class="au-avatar" style="width:34px;height:34px;font-size:12px">
+                  {% if row.obj.profile_image %}<img src="{{ row.obj.profile_image.url }}" alt="">{% else %}{{ row.obj.initials }}{% endif %}
+                </span>
+                <div>
+                  <a href="{% url 'dashboard:customer_detail' row.obj.pk %}">
+                    {{ row.obj.get_full_name|default:row.obj.username }}
+                  </a>
+                  <div class="text-muted" style="font-size:12.5px">{{ row.obj.email }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="text-muted">{{ row.obj.date_joined|date:"M j, Y" }}</td>
+            <td>{{ row.order_count }}</td>
+            <td class="text-end fw-bold">{{ row.spent|currency }}</td>
+            <td>
+              <span class="mg-chip {% if row.obj.is_active %}approved{% else %}rejected{% endif %}">
+                {{ row.obj.is_active|yesno:"Active,Disabled" }}
+              </span>
+            </td>
+            <td class="text-end text-nowrap">
+              {% if perms.accounts.change_user %}
+                <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:customer_edit' row.obj.pk %}" title="{% trans 'Edit' %}">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              {% endif %}
+              {% if perms.accounts.delete_user %}
+                <form method="post" action="{% url 'dashboard:customer_delete' row.obj.pk %}" class="d-inline"
+                      data-confirm="{% blocktrans with email=row.obj.email %}Permanently delete {{ email }}? Their orders will be kept, but reviews, addresses and notifications are removed.{% endblocktrans %}">
+                  {% csrf_token %}
+                  <button class="mg-btn mg-btn-ghost text-danger" type="submit" title="{% trans 'Delete' %}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6"><div class="mg-empty"><i class="bi bi-people"></i>{% trans "No customers found." %}</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "management/_pagination.html" with page_obj=page_obj q=q %}
+{% endblock %}

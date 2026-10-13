@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% blocktrans with pk=return_request.pk %}Return #{{ pk }}{% endblocktrans %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <a class="small text-muted text-decoration-none" href="{% url 'orders:detail' order.order_number %}">
+          <i class="bi bi-arrow-left"></i> {% blocktrans with order_number=order.order_number %}Order {{ order_number }}{% endblocktrans %}
+        </a>
+        <h1 class="h4 mb-1 mt-1">{% blocktrans with pk=return_request.pk %}Return #{{ pk }}{% endblocktrans %}</h1>
+        <p class="text-muted mb-0">{% blocktrans with date=return_request.created_at|date:"F j, Y · g:i A" %}Submitted {{ date }}{% endblocktrans %}</p>
+      </div>
+      <span class="au-status {{ return_request.status }}">{{ return_request.get_status_display }}</span>
+    </div>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="au-alert mb-3 {% if message.tags %}{{ message.tags }}{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="au-card p-4 mb-4">
+          <h5 class="mb-3">{% trans "Return Items" %}</h5>
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr>
+                  <th style="width:60px"></th>
+                  <th>{% trans "Product" %}</th>
+                  <th class="text-center">{% trans "Qty" %}</th>
+                  <th class="text-end">{% trans "Refund" %}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in items %}
+                  <tr>
+                    <td>
+                      <div class="au-thumb" style="width:48px;height:48px">
+                        {% if item.order_item.image_url %}<img src="{{ item.order_item.image_url }}" alt="" class="w-100 h-100 object-fit-cover">{% endif %}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="fw-semibold text-ink">{{ item.order_item.display_name }}</div>
+                      <div class="small text-muted">{% blocktrans with sku=item.order_item.product_sku %}SKU: {{ sku }}{% endblocktrans %}</div>
+                    </td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-end fw-bold">{{ item.refund_amount|currency }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colspan="3" class="text-end fw-semibold">{% trans "Total Refund" %}</td>
+                  <td class="text-end fw-bold text-success h5 mb-0">{{ return_request.refund_amount|currency }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        <div class="au-card p-4 mb-4">
+          <h5 class="mb-3">{% trans "Reason" %}</h5>
+          <p class="fw-semibold">{{ return_request.get_reason_display }}</p>
+          {% if return_request.reason_detail %}
+            <p class="text-muted">{{ return_request.reason_detail }}</p>
+          {% endif %}
+        </div>
+
+        {% if return_request.status == 'approved' and not return_request.tracking_number %}
+          <div class="au-card p-4 mb-4" style="background:#fff8e1;border-color:#ffe082">
+            <h5 class="mb-3"><i class="bi bi-truck"></i> {% trans "Ship Your Return" %}</h5>
+            <p class="text-muted mb-3">{% trans "Your return was approved. Please ship the items to:" %}</p>
+            <address class="mb-3" style="font-size:14px">
+              <strong>{% trans "Returns Department" %}</strong><br>
+              Aurora Store Warehouse<br>
+              123 Logistics Way<br>
+              Portland, OR 97201<br>
+              USA
+            </address>
+            <p class="small text-muted mb-0">
+              <strong>{% trans "Include this note:" %}</strong> {% blocktrans with pk=return_request.pk order_number=order.order_number %}Return #{{ pk }} for Order {{ order_number }}{% endblocktrans %}
+            </p>
+            <p class="small text-muted mb-0">
+              {% trans "Once shipped, please contact support with your tracking number so we can update your return." %}
+            </p>
+          </div>
+        {% endif %}
+
+        {% if return_request.tracking_number %}
+          <div class="au-card p-4 mb-4">
+            <h5 class="mb-3">{% trans "Tracking Information" %}</h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="small text-muted">{% trans "Carrier" %}</div>
+                <div class="fw-semibold">{{ return_request.carrier|default:"—" }}</div>
+              </div>
+              <div class="col-md-6">
+                <div class="small text-muted">{% trans "Tracking Number" %}</div>
+                <div class="fw-semibold">{{ return_request.tracking_number }}</div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if return_request.admin_note %}
+          <div class="au-card p-4 mb-4" style="background:#f5efe1;border-color:#e8dcc8">
+            <h5 class="mb-3">{% trans "Admin Note" %}</h5>
+            <p class="mb-0">{{ return_request.admin_note }}</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="col-lg-4">
+        <div class="au-card p-4 mb-4">
+          <h5 class="mb-3">{% trans "Timeline" %}</h5>
+          <ul class="au-timeline d-grid gap-3">
+            <li>
+              <span class="small text-muted" style="min-width:150px">{{ return_request.created_at|date:"M j, g:i A" }}</span>
+              <span class="small"><b>{% trans "Return requested" %}</b></span>
+            </li>
+            {% if return_request.approved_at %}
+              <li>
+                <span class="small text-muted" style="min-width:150px">{{ return_request.approved_at|date:"M j, g:i A" }}</span>
+                <span class="small"><b>{% trans "Approved" %}</b></span>
+              </li>
+            {% endif %}
+            {% if return_request.received_at %}
+              <li>
+                <span class="small text-muted" style="min-width:150px">{{ return_request.received_at|date:"M j, g:i A" }}</span>
+                <span class="small"><b>{% trans "Received at warehouse" %}</b></span>
+              </li>
+            {% endif %}
+            {% if return_request.refunded_at %}
+              <li>
+                <span class="small text-muted" style="min-width:150px">{{ return_request.refunded_at|date:"M j, g:i A" }}</span>
+                <span class="small"><b>{% trans "Refunded" %}</b> — {{ return_request.refund_amount|currency }}</span>
+              </li>
+            {% endif %}
+            {% if return_request.status == 'rejected' %}
+              <li>
+                <span class="small text-muted" style="min-width:150px">{{ return_request.updated_at|date:"M j, g:i A" }}</span>
+                <span class="small"><b>{% trans "Rejected" %}</b></span>
+              </li>
+            {% endif %}
+            {% if return_request.status == 'cancelled' %}
+              <li>
+                <span class="small text-muted" style="min-width:150px">{{ return_request.updated_at|date:"M j, g:i A" }}</span>
+                <span class="small"><b>{% trans "Cancelled by you" %}</b></span>
+              </li>
+            {% endif %}
+          </ul>
+        </div>
+
+        {% if return_request.can_customer_cancel %}
+          <div class="au-card p-4 mb-4">
+            <form method="post" action="{% url 'orders:return_cancel' order.order_number return_request.pk %}"
+                  data-confirm="{% trans 'Cancel this return request?' %}">
+              {% csrf_token %}
+              <p class="text-muted mb-3 small">{% trans "You can cancel this return request while it's still pending." %}</p>
+              <button class="btn btn-outline-danger w-100" type="submit">
+                <i class="bi bi-x-circle"></i> {% trans "Cancel Return Request" %}
+              </button>
+            </form>
+          </div>
+        {% endif %}
+
+        <div class="au-card p-4">
+          <h5 class="mb-3">{% trans "Need help?" %}</h5>
+          <p class="small text-muted mb-3">{% trans "Questions about your return? Contact our support team." %}</p>
+          <a class="btn btn-outline-primary w-100" href="mailto:support@aurora.example">
+            <i class="bi bi-headset"></i> {% trans "Contact Support" %}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Newsletter subscribers" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Newsletter subscribers" %}</h1>
+    <p class="mg-sub mb-0">{% blocktrans count counter=active_count %}{{ counter }} active subscriber.{% plural %}{{ counter }} active subscribers.{% endblocktrans %}</p>
+  </div>
+</div>
+
+<form class="mg-filterbar" method="get">
+  <div class="mg-search-inline">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% trans "Search email…" %}">
+  </div>
+  <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Search" %}</button>
+</form>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr><th>{% trans "Email" %}</th><th>{% trans "Source" %}</th><th>{% trans "Joined" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr>
+      </thead>
+      <tbody>
+        {% for s in subscribers %}
+          <tr>
+            <td class="fw-semibold">{{ s.email }}</td>
+            <td class="text-muted">{{ s.source }}</td>
+            <td class="text-muted">{{ s.created_at|date:"M j, Y" }}</td>
+            <td><span class="mg-chip {% if s.is_active %}approved{% else %}rejected{% endif %}">{{ s.is_active|yesno:"Subscribed,Unsubscribed" }}</span></td>
+            <td class="text-end">
+              <form method="post" action="{% url 'dashboard:subscriber_toggle' s.pk %}">
+                {% csrf_token %}
+                <button class="mg-btn mg-btn-ghost mg-btn-sm" type="submit">{{ s.is_active|yesno:"Unsubscribe,Resubscribe" }}</button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5"><div class="mg-empty"><i class="bi bi-envelope-paper"></i>{% trans "No subscribers yet." %}</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "management/_pagination.html" with page_obj=page_obj q=q %}
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% blocktrans with order_number=order.order_number %}Pay for {{ order_number }}{% endblocktrans %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section">
+  <div class="container-xxl">
+    <div class="row justify-content-center">
+      <div class="col-md-7 col-lg-5">
+        <div class="au-form-card">
+          <span class="au-eyebrow"><i class="bi bi-shield-lock"></i> {% trans "Stripe checkout" %}</span>
+          <h1 class="h4 mb-1">{% blocktrans with total=order.total|currency %}Pay {{ total }}{% endblocktrans %}</h1>
+          <p class="text-muted small mb-4">
+            {% blocktrans with order_number=order.order_number %}Order <b>{{ order_number }}</b> — your card is charged only after you confirm.{% endblocktrans %}
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label" for="card-element">{% trans "Card details" %}</label>
+            <div id="card-element" class="au-stripe-element"></div>
+            <div id="card-errors" class="invalid-feedback d-block" role="alert"></div>
+          </div>
+
+          <button id="pay-btn" class="btn btn-primary w-100" disabled>
+            <i class="bi bi-lock"></i> {% blocktrans with total=order.total|currency %}Pay {{ total }}{% endblocktrans %}
+          </button>
+
+          <p class="small text-center text-muted mt-3 mb-0">
+            {% trans "Payments are processed by Stripe. Card data never touches our servers." %}
+          </p>
+
+          <div class="text-center mt-3">
+            <a class="small" href="{% url 'orders:detail' order.order_number %}">{% trans "Back to order" %}</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+(function () {
+  const pk = "{{ stripe_public_key|escapejs }}";
+  const secret = "{{ client_secret|escapejs }}";
+  const confirmUrl = "{% url 'payments:stripe_confirm' order.order_number %}";
+  const btn = document.getElementById("pay-btn");
+  const errorBox = document.getElementById("card-errors");
+
+  if (!pk || !window.Stripe) {
+    errorBox.textContent = t("Stripe is not configured on this deployment.");
+    return;
+  }
+
+  const stripe = Stripe(pk);
+  const elements = stripe.elements({ locale: "auto" });
+  const card = elements.create("card", { style: { base: { fontSize: "16px", color: "#111827" } } });
+  card.mount("#card-element");
+  card.on("change", (event) => {
+    errorBox.textContent = event.error ? event.error.message : "";
+    btn.disabled = !event.complete;
+  });
+
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    btn.textContent = t("Processing…");
+    const { error, paymentIntent } = await stripe.confirmCardPayment(secret);
+    if (error) {
+      errorBox.textContent = error.message;
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-lock"></i> ' + ts("Pay %s", "{{ order.total|currency }}");
+      return;
+    }
+    const res = await fetch(confirmUrl, {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-CSRFToken": "{{ csrf_token }}"},
+      body: JSON.stringify(paymentIntent),
+    }).then((r) => r.json());
+    if (res.ok) {
+      window.location.href = res.redirect;
+    } else {
+      errorBox.textContent = res.message || t("Payment could not be verified.");
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-lock"></i> ' + ts("Pay %s", "{{ order.total|currency }}");
+    }
+  });
+})();
+</script>
+{% endblock %}

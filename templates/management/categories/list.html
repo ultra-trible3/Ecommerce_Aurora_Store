@@ -1,0 +1,56 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Categories" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Categories" %}</h1>
+    <p class="mg-sub mb-0">{% trans "Organise your catalogue into browseable departments." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:category_create' %}">
+    <i class="bi bi-plus-lg"></i> {% trans "New category" %}
+  </a>
+</div>
+
+<form class="mg-filterbar" method="get">
+  <div class="mg-search-inline">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" value="{{ request.GET.q }}" placeholder="{% trans "Search categories…" %}">
+  </div>
+  <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Search" %}</button>
+</form>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr><th>{% trans "Name" %}</th><th>{% trans "Parent" %}</th><th>{% trans "Products" %}</th><th>{% trans "Position" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          {% with c=row.category %}
+            <tr>
+              <td class="fw-semibold">{{ c.name }}{% if c.is_featured %} <i class="bi bi-star-fill text-warning"></i>{% endif %}</td>
+              <td class="text-muted">{{ c.parent.name|default:"—" }}</td>
+              <td>{{ row.product_count }}</td>
+              <td class="text-muted">{{ c.position }}</td>
+              <td><span class="mg-chip {% if c.is_active %}approved{% else %}rejected{% endif %}">{{ c.is_active|yesno:"Active,Hidden" }}</span></td>
+              <td class="text-end">
+                <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:category_edit' c.pk %}">{% trans "Edit" %}</a>
+                <form method="post" action="{% url 'dashboard:category_toggle' c.pk %}" class="d-inline">
+                  {% csrf_token %}
+                  <button class="mg-btn mg-btn-ghost mg-btn-sm" type="submit">{{ c.is_active|yesno:"Hide,Show" }}</button>
+                </form>
+              </td>
+            </tr>
+          {% endwith %}
+        {% empty %}
+          <tr><td colspan="6"><div class="mg-empty"><i class="bi bi-tags"></i>{% trans "No categories yet." %}</div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

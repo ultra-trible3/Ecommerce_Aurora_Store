@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="au-confirm" id="au-confirm" hidden>
+  <div class="au-confirm-backdrop" data-au-dismiss></div>
+  <div class="au-confirm-card" role="alertdialog" aria-modal="true"
+       aria-labelledby="au-confirm-title" aria-describedby="au-confirm-text">
+    <div class="au-confirm-icon" aria-hidden="true">
+      <i class="bi bi-exclamation-triangle"></i>
+    </div>
+    <h3 class="au-confirm-title" id="au-confirm-title">{% trans "Are you sure?" %}</h3>
+    <p class="au-confirm-text" id="au-confirm-text"></p>
+    <div class="au-confirm-actions">
+      <button type="button" class="au-confirm-btn au-confirm-cancel" data-au-dismiss>{% trans "Cancel" %}</button>
+      <button type="button" class="au-confirm-btn au-confirm-ok" id="au-confirm-ok">{% trans "Confirm" %}</button>
+    </div>
+  </div>
+</div>

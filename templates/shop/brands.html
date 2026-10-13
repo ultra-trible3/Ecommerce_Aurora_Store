@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% trans "Brands" %} | {{ SITE_NAME }}{% endblock %}
+{% block breadcrumbs %}
+<div class="container-xxl">{% include "includes/breadcrumbs.html" %}</div>
+{% endblock %}
+
+{% block content %}
+<section class="au-section pt-2">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <span class="au-eyebrow"><i class="bi bi-award"></i> {% trans "Partners" %}</span>
+        <h2>{% trans "Shop by brand" %}</h2>
+        <p>{% trans "Every brand we stock, in one place." %}</p>
+      </div>
+    </div>
+
+    {% if brands %}
+      <div class="row g-3 g-md-4">
+        {% for brand in brands %}
+          <div class="col-6 col-md-4 col-xl-3">
+            <a class="au-cat" href="{{ brand.get_absolute_url }}">
+              <div class="cat-img" style="aspect-ratio:16/9">
+                {% if brand.logo %}
+                  <img src="{{ brand.logo.url }}" alt="{{ brand.name }}" loading="lazy"
+                       style="object-fit:contain;background:#fff">
+                {% else %}
+                  <span class="glyph"><i class="bi bi-award"></i></span>
+                {% endif %}
+              </div>
+              <div class="cat-body">
+                <div>
+                  <b>{{ brand.name }}</b>
+                  <span class="d-block">{% blocktrans count counter=brand.product_count %}{{ counter }} product{% plural %}{{ counter }} products{% endblocktrans %}</span>
+                </div>
+                <i class="bi bi-arrow-right text-muted-2"></i>
+              </div>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      {% trans "No brands yet" as empty_title %}
+      {% trans "Brands will show up here once they are added." as empty_text %}
+      {% trans "Browse products" as empty_action %}
+      {% include "includes/empty_state.html" with icon="bi-award" title=empty_title text=empty_text action_url="/shop/" action_label=empty_action %}
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

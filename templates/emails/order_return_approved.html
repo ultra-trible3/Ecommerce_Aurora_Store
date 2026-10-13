@@ -1,0 +1,30 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{% block content %}
+<p>{% blocktrans with name=order.customer_name %}Hi {{ name }},{% endblocktrans %}</p>
+
+<p>{% blocktrans with number=order.order_number %}Great news! Your return request for <strong>Order {{ number }}</strong> has been <strong>approved</strong>.{% endblocktrans %}</p>
+
+<p><strong>{% trans "Return ID:" %}</strong> #{{ return_request.pk }}<br>
+<strong>{% trans "Items:" %}</strong> {{ return_request.items.count }}<br>
+<strong>{% trans "Refund Amount:" %}</strong> {{ return_request.refund_amount|currency }}</p>
+
+<p>{% trans "Please ship the items to:" %}</p>
+<address>
+<strong>{% trans "Returns Department" %}</strong><br>
+Aurora Store Warehouse<br>
+123 Logistics Way<br>
+Portland, OR 97201<br>
+USA
+</address>
+
+<p>{% blocktrans with pk=return_request.pk number=order.order_number %}<strong>Important:</strong> Please include a note with <strong>Return #{{ pk }}</strong> for Order {{ number }} inside the package.{% endblocktrans %}</p>
+
+<p>{% trans "Once we receive and inspect the items, we'll process your refund to the original payment method. Refunds typically appear within 5-10 business days." %}</p>
+
+<p>{% blocktrans %}You can track your return status in your <a href="{{ site_url }}/orders/{{ order.order_number }}/return/{{ return_request.pk }}/">account</a>.{% endblocktrans %}</p>
+
+<p>{% trans "Thanks for shopping with us!" %}</p>
+<p>{% blocktrans with site=SITE_NAME %}The {{ site }} Team{% endblocktrans %}</p>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% trans "Addresses" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+    <div class="row g-4">
+      <div class="col-lg-3">{% include "includes/account_nav.html" with nav="addresses" %}</div>
+
+      <div class="col-lg-9">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+          <div>
+            <h1 class="h4 mb-1">{% trans "Saved addresses" %}</h1>
+            <p class="text-muted mb-0">{% trans "Pick a default to speed through checkout." %}</p>
+          </div>
+          <a class="btn btn-primary btn-sm" href="{% url 'accounts:address_create' %}">
+            <i class="bi bi-plus-lg"></i> {% trans "Add address" %}
+          </a>
+        </div>
+
+
+        <h6 class="text-muted text-uppercase mb-2" style="font-size:.75rem;letter-spacing:.08em">{% trans "Shipping addresses" %}</h6>
+        <div class="row g-3 mb-4">
+          {% for address in shipping %}
+            <div class="col-md-6">
+              <div class="au-address {% if address.is_default %}default{% endif %}">
+                {% if address.is_default %}
+                  <span class="badge-corner badge bg-primary-subtle text-primary">{% trans "Default" %}</span>
+                {% endif %}
+                <b class="d-block text-ink">{{ address.full_name }}</b>
+                <span class="small text-muted d-block">{{ address.phone }}</span>
+                <p class="small mt-2 mb-2">{{ address.as_line }}</p>
+                <div class="d-flex gap-2">
+                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:address_update' address.pk %}">{% trans "Edit" %}</a>
+                  {% if not address.is_default %}
+                    <form method="post" action="{% url 'accounts:address_set_default' address.pk %}">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-soft" type="submit">{% trans "Set default" %}</button>
+                    </form>
+                  {% endif %}
+                  <form method="post" action="{% url 'accounts:address_delete' address.pk %}"
+                        data-confirm="{% trans 'Delete this address?' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger" type="submit">{% trans "Delete" %}</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="col-12">
+              <div class="au-empty py-4">
+                <p class="text-muted mb-0">{% trans "No shipping addresses yet." %}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+        <h6 class="text-muted text-uppercase mb-2" style="font-size:.75rem;letter-spacing:.08em">{% trans "Billing addresses" %}</h6>
+        <div class="row g-3">
+          {% for address in billing %}
+            <div class="col-md-6">
+              <div class="au-address {% if address.is_default %}default{% endif %}">
+                {% if address.is_default %}
+                  <span class="badge-corner badge bg-primary-subtle text-primary">{% trans "Default" %}</span>
+                {% endif %}
+                <b class="d-block text-ink">{{ address.full_name }}</b>
+                <p class="small mt-2 mb-2">{{ address.as_line }}</p>
+                <div class="d-flex gap-2">
+                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:address_update' address.pk %}">{% trans "Edit" %}</a>
+                  <form method="post" action="{% url 'accounts:address_delete' address.pk %}"
+                        data-confirm="{% trans 'Delete this address?' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger" type="submit">{% trans "Delete" %}</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% empty %}
+            <div class="col-12">
+              <div class="au-empty py-4">
+                <p class="text-muted mb-0">{% trans "No billing addresses yet." %}</p>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

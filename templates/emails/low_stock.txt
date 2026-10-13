@@ -1,0 +1,4 @@
+Low stock alert
+
+{{ product.name }} is down to {{ product.stock_quantity }} unit(s) (threshold: {{ threshold }}).
+SKU {{ product.sku }}

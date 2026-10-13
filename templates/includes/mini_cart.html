@@ -1,0 +1,61 @@
+{% load core_tags i18n %}
+{% if cart and not cart.is_empty %}
+  <div class="au-panel-list">
+    {% for item in totals.items %}
+      <div class="au-panel-item" id="mini-cart-item-{{ item.pk }}">
+        <a class="thumb" href="{{ item.product.get_absolute_url }}">
+          {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.product.name }}">
+          {% else %}
+            <span class="no-image"><i class="bi bi-image"></i></span>
+          {% endif %}
+        </a>
+        <div class="info">
+          <a class="name" href="{{ item.product.get_absolute_url }}">{{ item.display_name }}</a>
+          {% if not item.is_available %}
+            <span class="stock-warn"><i class="bi bi-exclamation-circle"></i> {% trans "Unavailable" %}</span>
+          {% endif %}
+          <span class="price">{{ item.line_total|currency }}</span>
+          <form method="post" action="{% url 'cart:update' %}" data-panel-form>
+            {% csrf_token %}
+            <input type="hidden" name="item_id" value="{{ item.pk }}">
+            <div class="au-qty">
+              <button type="button" data-qty-step="down" aria-label="{% trans 'Decrease quantity' %}">&minus;</button>
+              <input type="number" name="quantity" value="{{ item.quantity }}" min="0" max="{{ item.max_quantity }}"
+                     aria-label="{% trans 'Quantity' %}">
+              <button type="button" data-qty-step="up" aria-label="{% trans 'Increase quantity' %}">+</button>
+            </div>
+          </form>
+        </div>
+        <form method="post" action="{% url 'cart:remove' %}" data-panel-form class="au-panel-remove">
+          {% csrf_token %}
+          <input type="hidden" name="item_id" value="{{ item.pk }}">
+          <button class="btn-icon" type="submit" title="{% trans 'Remove' %}" aria-label="{% trans 'Remove from cart' %}">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+
+  <div class="au-panel-foot">
+    <div class="au-panel-subtotal">
+      <span class="text-muted">{% trans "Subtotal" %}</span>
+      <b>{{ totals.subtotal|currency }}</b>
+    </div>
+    {% if totals.discount %}
+      <div class="au-panel-subtotal small text-success mt-1">
+        <span>{% trans "Discount" %}{% if coupon %} ({{ coupon.code }}){% endif %}</span>
+        <span>&minus;{{ totals.discount|currency }}</span>
+      </div>
+    {% endif %}
+    <a href="{% url 'checkout:start' %}" class="btn btn-primary w-100 mt-2">{% trans "Checkout" %}</a>
+  </div>
+{% else %}
+  <div class="au-panel-empty">
+    <i class="bi bi-bag"></i>
+    <b class="d-block">{% trans "Your cart is empty" %}</b>
+    <span>{% trans "Add something you love — it will show up here." %}</span>
+    <a href="{% url 'catalog:shop' %}" class="btn btn-sm btn-primary mt-2">{% trans "Start shopping" %}</a>
+  </div>
+{% endif %}

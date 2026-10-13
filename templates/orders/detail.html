@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% blocktrans with order_number=order.order_number %}Order {{ order_number }}{% endblocktrans %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+
+    {% if just_placed %}
+      <div class="au-alert mb-4" style="background:#ecfdf5;color:#065f46;border-color:#a7f3d0">
+        <i class="bi bi-check-circle-fill"></i>
+        <div>
+          <b>{% trans "Thank you — your order is in!" %}</b><br>
+          <span class="small">{% blocktrans with email=order.email %}A confirmation email was sent to <b>{{ email }}</b>.{% endblocktrans %}</span>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="au-section-head">
+      <div>
+        <a class="small text-muted" href="{% url 'orders:list' %}"><i class="bi bi-arrow-left"></i> {% trans "All orders" %}</a>
+        <h1 class="h4 mb-1 mt-1">{% blocktrans with order_number=order.order_number %}Order {{ order_number }}{% endblocktrans %}</h1>
+        <p class="text-muted mb-0">{% blocktrans with date=order.created_at|date:"F j, Y · g:i A" %}Placed {{ date }}{% endblocktrans %}</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <span class="au-status {{ order.status }}">{{ order.get_status_display }}</span>
+        {% if order.is_paid %}
+          <span class="badge bg-success-subtle text-success"><i class="bi bi-check2-circle"></i> {% trans "Paid" %}</span>
+        {% else %}
+          <span class="badge bg-warning-subtle text-warning"><i class="bi bi-clock"></i> {% blocktrans with status=order.get_payment_status_display %}Payment {{ status }}{% endblocktrans %}</span>
+        {% endif %}
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'orders:track' order.order_number %}">
+          <i class="bi bi-truck"></i> {% trans "Track order" %}
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'orders:invoice' order.order_number %}">
+          <i class="bi bi-file-earmark-arrow-down"></i> {% trans "Invoice" %}
+        </a>
+        {% if order.payment_method == 'stripe' and not order.is_paid and order.status != 'cancelled' %}
+          <a class="btn btn-sm btn-primary" href="{% url 'payments:stripe_pay' order.order_number %}">
+            <i class="bi bi-credit-card"></i> {% blocktrans with total=order.total|currency %}Pay now — {{ total }}{% endblocktrans %}
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Tracking -->
+    <div class="au-card p-4 mb-4">
+      <div class="au-track">
+        {% for step in steps %}
+          <div class="au-track-item {% if step.done %}done{% endif %} {% if step.current %}current{% endif %}">
+            <span class="dot"></span>
+            <b>{{ step.label }}</b>
+            <time>{% if step.timestamp %}{{ step.timestamp|date:"M j, g:i A" }}{% else %}{% trans "Pending" %}{% endif %}</time>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-7">
+        <div class="au-card p-4 mb-4">
+          <h5 class="mb-3">{% trans "Items" %}</h5>
+          <div class="d-grid gap-3">
+            {% for item in items %}
+              <div class="d-flex gap-3 align-items-center">
+                <div class="au-thumb">
+                  {% if item.image_url %}<img src="{{ item.image_url }}" alt="{{ item.product_name }}">{% endif %}
+                </div>
+                <div class="flex-grow-1" style="min-width:0">
+                  <div class="fw-semibold text-ink">{{ item.display_name }}</div>
+                  <div class="small text-muted">{% blocktrans with sku=item.product_sku price=item.unit_price|currency %}SKU {{ sku }} · {{ price }} each{% endblocktrans %}</div>
+                  {% if item.discount_each %}
+                    <div class="small text-success">{% blocktrans with saved=item.discount_amount|currency %}Saved {{ saved }}{% endblocktrans %}</div>
+                  {% endif %}
+                </div>
+                <div class="text-end">
+                  <div class="small text-muted">× {{ item.quantity }}</div>
+                  <div class="fw-bold text-ink">{{ item.line_total|currency }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="au-card p-4 h-100">
+              <h6 class="mb-2">{% trans "Shipping address" %}</h6>
+              <p class="small mb-1 text-ink"><b>{{ order.shipping_full_name }}</b></p>
+              <p class="small text-muted mb-0">{{ order.shipping_address_line|linebreaksbr }}</p>
+              {% if order.shipping_phone %}<p class="small text-muted mb-0">{{ order.shipping_phone }}</p>{% endif %}
+              {% if order.shipping_method_name %}
+                <div class="small mt-2"><i class="bi bi-truck"></i> {{ order.shipping_method_name }} — {{ order.shipping_method_price|currency }}</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="au-card p-4 h-100">
+              <h6 class="mb-2">{% trans "Billing & payment" %}</h6>
+              <p class="small text-muted mb-2">{{ order.billing_address_line|linebreaksbr }}</p>
+              <div class="small">
+                <i class="bi bi-credit-card"></i>
+                {% if order.payment_method == 'cod' %}{% trans "Cash on delivery" %}
+                {% elif order.payment_method == 'stripe' %}{% trans "Card (Stripe)" %}
+                {% else %}{% trans "PayPal" %}{% endif %}
+                · {{ order.get_payment_status_display }}
+              </div>
+              {% if payment %}
+                <div class="small text-muted mt-1">
+                  {% blocktrans with ref=payment.transaction_id|default:"—" date=payment.created_at|date:"M j, Y" %}Ref {{ ref }} · {{ date }}{% endblocktrans %}
+                </div>
+                {% if payment.error_message %}
+                  <div class="small mt-1" style="color:var(--au-danger)">
+                    <i class="bi bi-exclamation-circle"></i> {{ payment.error_message }}
+                  </div>
+                {% endif %}
+              {% endif %}
+              {% if order.payment_method == 'stripe' and not order.is_paid and order.status != 'cancelled' %}
+                <a class="btn btn-sm btn-primary mt-3 w-100" href="{% url 'payments:stripe_pay' order.order_number %}">
+                  <i class="bi bi-credit-card"></i> {% blocktrans with total=order.total|currency %}Pay {{ total }} with card{% endblocktrans %}
+                </a>
+              {% elif order.payment_method == 'cod' and not order.is_paid %}
+                <div class="small text-muted mt-2">
+                  <i class="bi bi-cash-coin"></i> {% blocktrans with total=order.total|currency %}You will pay {{ total }} in cash when your order arrives.{% endblocktrans %}
+                </div>
+              {% endif %}
+              {% if order.notes %}
+                <div class="small text-muted mt-2"><i class="bi bi-sticky"></i> {{ order.notes }}</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div class="au-summary mb-4">
+          <h5 class="mb-3">{% trans "Summary" %}</h5>
+          <div class="line"><span>{% trans "Subtotal" %}</span><span>{{ order.subtotal|currency }}</span></div>
+          {% if order.discount %}
+            <div class="line discount">
+              <span>{% if order.coupon_code %}{% blocktrans with code=order.coupon_code %}Discount ({{ code }}){% endblocktrans %}{% else %}{% trans "Discount" %}{% endif %}</span>
+              <span>−{{ order.discount|currency }}</span>
+            </div>
+          {% endif %}
+          <div class="line"><span>{% trans "Shipping" %}</span><span>{{ order.shipping_cost|currency }}</span></div>
+          <div class="line"><span>{% trans "Tax" %}</span><span>{{ order.tax|currency }}</span></div>
+          <div class="line total"><span>{% trans "Total" %}</span><span>{{ order.total|currency }}</span></div>
+        </div>
+
+        {% if order.can_cancel %}
+          <div class="au-card p-4">
+            <h6 class="mb-1">{% trans "Changed your mind?" %}</h6>
+            <p class="small text-muted mb-3">{% trans "You can cancel this order while it is still unconfirmed." %}</p>
+            <form method="post" action="{% url 'orders:cancel' order.order_number %}"
+                  data-confirm="{% blocktrans with order_number=order.order_number %}Cancel order {{ order_number }}?{% endblocktrans %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label small">{% trans "Reason for cancellation" %}</label>
+                <select name="reason_category" class="form-select form-select-sm" required>
+                  <option value="" selected disabled>{% trans "Select a reason" %}</option>
+                  {% for code, label in order.CANCEL_REASON_CATEGORIES %}
+                    <option value="{{ code }}">{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">{% trans "Additional details (optional)" %}</label>
+                <textarea name="reason" class="form-control form-control-sm" rows="2" maxlength="255"
+                          placeholder="{% trans 'Any other details...' %}"></textarea>
+              </div>
+              <button class="btn btn-outline-danger w-100" type="submit">
+                <i class="bi bi-x-circle"></i> {% trans "Cancel order" %}
+              </button>
+            </form>
+          </div>
+        {% endif %}
+
+        <div class="au-card p-4 mt-3">
+          <h6 class="mb-2">{% trans "Need help?" %}</h6>
+          <p class="small text-muted mb-2">{% trans "Questions about delivery or a refund? Our support team replies within 24h." %}</p>
+          <a class="btn btn-sm btn-outline-primary w-100" href="mailto:support@{{ SITE_NAME|lower|cut:' ' }}.example">
+            <i class="bi bi-headset"></i> {% trans "Contact support" %}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% if history %}
+      <div class="au-card p-4 mt-4">
+        <h5 class="mb-3">{% trans "Order activity" %}</h5>
+        <div class="au-timeline d-grid gap-3">
+          {% for h in history|dictsortreversed:"created_at" %}
+            <div class="d-flex gap-3">
+              <span class="small text-muted" style="min-width:150px">{{ h.created_at|date:"M j, g:i A" }}</span>
+              <span class="small">
+                <b>{{ h.label }}</b>
+                {% if h.note %} — {{ h.note }}{% endif %}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

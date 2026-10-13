@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% trans "My orders" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+    <div class="row g-4">
+      <div class="col-lg-3">{% include "includes/account_nav.html" with nav="orders" %}</div>
+
+      <div class="col-lg-9">
+        <div class="au-card au-orders-bar p-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+              <h1 class="h4 mb-1">{% trans "My orders" %}</h1>
+              <p class="text-muted mb-0">
+                {% blocktrans count count=page_obj.paginator.count %}{{ count }} order{% plural %}{{ count }} orders{% endblocktrans %}
+                · {% blocktrans with count=active_count %}{{ count }} in progress{% endblocktrans %}
+              </p>
+            </div>
+          </div>
+
+          <div class="au-chips" role="group" aria-label="{% trans 'Filter orders by status' %}">
+            <a href="{% url 'orders:list' %}" class="chip {% if not status_filter %}active{% endif %}">{% trans "All" %}</a>
+            {% for code, label in status_choices %}
+              <a href="?status={{ code }}" class="chip {% if status_filter == code %}active{% endif %}">{{ label }}</a>
+            {% endfor %}
+          </div>
+        </div>
+
+        {% if orders %}
+          <div class="au-order-list">
+            {% for order in orders %}
+              <article class="au-card au-order">
+                <div class="au-order-top">
+                  <div class="au-order-id">
+                    <a class="au-order-number" href="{% url 'orders:detail' order.order_number %}">
+                      {{ order.order_number }}
+                    </a>
+                    <span class="au-order-date">
+                      <i class="bi bi-calendar3"></i> {% blocktrans with date=order.created_at|date:"M j, Y · g:i A" %}Placed {{ date }}{% endblocktrans %}
+                    </span>
+                  </div>
+                  <div class="au-order-badges">
+                    <span class="au-pay {% if order.is_paid %}paid{% endif %}">
+                      <i class="bi {% if order.is_paid %}bi-check2-circle{% else %}bi-clock{% endif %}"></i>
+                      {% if order.is_paid %}{% trans "Paid" %}{% else %}{{ order.get_payment_status_display }}{% endif %}
+                    </span>
+                    <span class="au-status {{ order.status }}">{{ order.get_status_display }}</span>
+                  </div>
+                </div>
+
+                <div class="au-order-progress">
+                  <div class="au-progress" role="progressbar"
+                       aria-valuenow="{{ order.progress_percent }}"
+                       aria-valuemin="0" aria-valuemax="100"
+                       aria-label="{% trans 'Order progress' %}">
+                    <span style="width: {{ order.progress_percent }}%"></span>
+                  </div>
+                  <span class="au-progress-text">
+                    {% if order.status in order.DEAD_END_STATUSES %}
+                      {% blocktrans with status=order.get_status_display %}Stopped · {{ status }}{% endblocktrans %}
+                    {% else %}
+                      {{ order.progress_percent }}% · {{ order.get_status_display }}
+                    {% endif %}
+                  </span>
+                </div>
+
+                <div class="au-order-items">
+                  <div class="au-order-thumbs">
+                    {% for item in order.items.all|slice:":4" %}
+                      <a class="au-order-thumb" href="{% url 'orders:detail' order.order_number %}"
+                         title="{{ item.display_name }}">
+                        {% if item.image_url %}
+                          <img src="{{ item.image_url }}" alt="{{ item.display_name }}">
+                        {% else %}
+                          <i class="bi bi-bag"></i>
+                        {% endif %}
+                      </a>
+                    {% endfor %}
+                    {% with remaining=order.items.count|add:"-4" %}
+                      {% if remaining > 0 %}
+                        <span class="au-order-thumb more" aria-hidden="true">+{{ remaining }}</span>
+                      {% endif %}
+                    {% endwith %}
+                  </div>
+
+                  <div class="au-order-info">
+                    <ul class="au-order-lines">
+                      {% for item in order.items.all|slice:":3" %}
+                        <li>
+                          <span class="au-line-name">{{ item.display_name }}</span>
+                          <span class="au-line-qty">× {{ item.quantity }}</span>
+                        </li>
+                      {% endfor %}
+                      {% with remaining=order.items.count|add:"-3" %}
+                        {% if remaining > 0 %}
+                          <li class="au-line-more">{% blocktrans count count=remaining %}+{{ count }} more product{% plural %}+{{ count }} more products{% endblocktrans %}</li>
+                        {% endif %}
+                      {% endwith %}
+                    </ul>
+                    <div class="au-order-ship">
+                      <i class="bi bi-geo-alt"></i>
+                      {{ order.shipping_city }}{% if order.shipping_country %}, {{ order.shipping_country }}{% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <footer class="au-order-foot">
+                  <div class="au-order-total">
+                    <span class="au-label">{% trans "Total" %}</span>
+                    <strong>{{ order.total|currency }}</strong>
+                    <span class="au-order-count">
+                      {% blocktrans count count=order.items_count %}{{ count }} item{% plural %}{{ count }} items{% endblocktrans %}
+                    </span>
+                  </div>
+                  <div class="au-order-actions">
+                    <a class="btn btn-sm btn-primary" href="{% url 'orders:track' order.order_number %}">
+                      <i class="bi bi-truck"></i> {% trans "Track order" %}
+                    </a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'orders:detail' order.order_number %}">
+                      {% trans "Details" %}
+                    </a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'orders:invoice' order.order_number %}">
+                      <i class="bi bi-file-earmark-arrow-down"></i> {% trans "Invoice" %}
+                    </a>
+                  </div>
+                </footer>
+              </article>
+            {% endfor %}
+          </div>
+
+          {% include "includes/pagination.html" with page_obj=page_obj %}
+        {% else %}
+          {% trans "No orders here" as empty_title %}
+          {% trans "Orders matching this filter will show up here." as empty_text %}
+          {% trans "Browse products" as empty_action %}
+          {% include "includes/empty_state.html" with icon="bi-receipt" title=empty_title text=empty_text action_url="/shop/" action_label=empty_action %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

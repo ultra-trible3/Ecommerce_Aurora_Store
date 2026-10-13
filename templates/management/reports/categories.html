@@ -1,0 +1,119 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Sales by Category" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:reports' %}"><i class="bi bi-arrow-left"></i> {% trans "Reports" %}</a>
+    <h1 class="mg-title mt-1">{% trans "Sales by Category" %}</h1>
+    <p class="mg-sub mb-0">{{ date_from|date:"M j, Y" }} — {{ date_to|date:"M j, Y" }}</p>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:reports_categories_pdf' %}?date_from={{ date_from }}&date_to={{ date_to }}">
+    <i class="bi bi-file-earmark-pdf"></i> {% trans "Download PDF" %}
+  </a>
+</div>
+
+<!-- Report Navigation Tabs -->
+<div class="mg-card mb-4">
+  {% include "management/reports/_tabs.html" with active="categories" %}
+</div>
+
+<!-- Date Range Selector -->
+<div class="mg-card mb-4">
+  <div class="mg-card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small">{% trans "From" %}</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">{% trans "To" %}</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <button class="mg-btn mg-btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> {% trans "Apply" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Category Chart + Table -->
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="mg-card h-100">
+      <div class="mg-card-head"><h5>{% trans "Revenue by Category" %}</h5></div>
+      <div class="mg-card-body">
+        <div class="mg-chart"><canvas id="categoryChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="mg-card h-100">
+      <div class="mg-card-head"><h5>{% trans "Category Breakdown" %}</h5></div>
+      <div class="mg-card-body p-0">
+        <div class="table-responsive">
+          <table class="mg-table">
+            <thead>
+              <tr><th>{% trans "Category" %}</th><th class="text-end">{% trans "Revenue" %}</th><th class="text-end">{% trans "Units Sold" %}</th><th class="text-end">{% trans "Orders" %}</th></tr>
+            </thead>
+            <tbody>
+              {% for c in by_category %}
+                <tr>
+                  <td>
+                    <strong>{{ c.items__product__category__name|default:"—" }}</strong>
+                    {% if c.items__product__category__slug %}
+                      <br><small class="text-muted">{{ c.items__product__category__slug }}</small>
+                    {% endif %}
+                  </td>
+                  <td class="text-end fw-bold">{{ c.revenue|currency }}</td>
+                  <td class="text-end">{{ c.units }}</td>
+                  <td class="text-end">{{ c.orders }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4"><div class="mg-empty py-3">{% trans "No category data for this period." %}</div></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ by_category|json_script:"category-data" }}
+<script>
+  const CURRENCY = window.SITE_CURRENCY || "$";
+  const categories = JSON.parse(document.getElementById("category-data").textContent);
+
+  function money(v) { return CURRENCY + Number(v).toLocaleString(); }
+
+  const PALETTE = [
+    "#790d16", "#a3252f", "#5b7f96", "#aec4d4", 
+    "#10b981", "#f59e0b", "#3b82f6", "#ef4444",
+    "#8b5cf6", "#ec4899", "#14b8a6", "#eab308"
+  ];
+  const gridColor = "rgba(121, 13, 22, .14)";
+  const tickColor = "#7a6a62";
+
+  if (categories.length && document.getElementById("categoryChart")) new Chart(document.getElementById("categoryChart"), {
+    type: "doughnut",
+    data: {
+      labels: categories.map(c => c.items__product__category__name || "—"),
+      datasets: [{
+        data: categories.map(c => c.revenue || 0),
+        backgroundColor: categories.map((_, i) => PALETTE[i % PALETTE.length]),
+        borderWidth: 3, borderColor: "#fff", hoverOffset: 8,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false, cutout: "64%",
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "circle", color: "#4a3c36", font: { size: 11, weight: "600" } } } },
+    },
+  });
+</script>
+{% endblock %}

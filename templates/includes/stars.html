@@ -1,0 +1,12 @@
+{% load i18n %}
+<div class="au-stars {% if large %}lg{% endif %}" role="img" aria-label="{% blocktrans with rating=rating|floatformat:1 %}{{ rating }} out of 5 stars{% endblocktrans %}">
+  {% for i in "12345" %}{% with n=i|add:0 %}
+    {% if rating >= n %}
+      <i class="bi bi-star-fill fill"></i>
+    {% elif rating >= n|add:"-0.5" %}
+      <i class="bi bi-star-half"></i>
+    {% else %}
+      <i class="bi bi-star"></i>
+    {% endif %}
+  {% endwith %}{% endfor %}
+</div>

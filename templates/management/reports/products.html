@@ -1,0 +1,136 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Product Performance" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:reports' %}"><i class="bi bi-arrow-left"></i> {% trans "Reports" %}</a>
+    <h1 class="mg-title mt-1">{% trans "Product Performance" %}</h1>
+    <p class="mg-sub mb-0">{{ date_from|date:"M j, Y" }} — {{ date_to|date:"M j, Y" }}</p>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:reports_products_pdf' %}?date_from={{ date_from }}&date_to={{ date_to }}">
+    <i class="bi bi-file-earmark-pdf"></i> {% trans "Download PDF" %}
+  </a>
+</div>
+
+<!-- Report Navigation Tabs -->
+<div class="mg-card mb-4">
+  {% include "management/reports/_tabs.html" with active="products" %}
+</div>
+
+<!-- Date Range Selector -->
+<div class="mg-card mb-4">
+  <div class="mg-card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small">{% trans "From" %}</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small">{% trans "To" %}</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+      </div>
+      <div class="col-md-4">
+        <button class="mg-btn mg-btn-primary w-100" type="submit"><i class="bi bi-funnel"></i> {% trans "Apply" %}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Top Selling Products -->
+<div class="mg-card mb-4">
+  <div class="mg-card-head"><h5>{% trans "Top Selling Products" %}</h5></div>
+  <div class="mg-card-body p-0">
+    <div class="table-responsive">
+      <table class="mg-table">
+        <thead>
+          <tr>
+            <th>{% trans "Product" %}</th>
+            <th>{% trans "SKU" %}</th>
+            <th class="text-end">{% trans "Units Sold" %}</th>
+            <th class="text-end">{% trans "Revenue" %}</th>
+            <th class="text-end">{% trans "Orders" %}</th>
+            <th class="text-end">{% trans "Avg. Price" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in top_selling %}
+            <tr>
+              <td>
+                <strong>{{ p.items__product_name }}</strong>
+              </td>
+              <td class="text-muted">{{ p.items__product_sku }}</td>
+              <td class="text-end">{{ p.units_sold }}</td>
+              <td class="text-end fw-bold">{{ p.revenue|currency }}</td>
+              <td class="text-end">{{ p.orders }}</td>
+              <td class="text-end">{{ p.avg_price|currency }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="6"><div class="mg-empty py-3">{% trans "No sales data for this period." %}</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Low Stock Alerts -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="mg-card h-100">
+      <div class="mg-card-head">
+        <h5>{% trans "Low Stock Alerts" %}</h5>
+        {% if perms.inventory.view_stocktransaction %}
+          <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:inventory' %}">{% trans "Manage" %}</a>
+        {% endif %}
+      </div>
+      <div class="mg-card-body p-0">
+        {% if low_stock %}
+          <ul class="list-unstyled mb-0">
+            {% for p in low_stock %}
+              <li class="d-flex justify-content-between align-items-center py-2 px-3 border-bottom">
+                {% if perms.catalog.view_product %}
+                  <a class="text-decoration-none text-dark fw-semibold" href="{% url 'dashboard:product_detail' p.id %}">{{ p.name }}</a>
+                {% else %}
+                  <span class="text-dark fw-semibold">{{ p.name }}</span>
+                {% endif %}
+                <span class="mg-chip {% if p.stock_quantity == 0 %}out{% else %}low{% endif %}">
+                  {% blocktrans with qty=p.stock_quantity %}{{ qty }} left{% endblocktrans %}
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="mg-empty py-3"><i class="bi bi-check2-circle"></i>{% trans "All products in stock." %}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="mg-card h-100">
+      <div class="mg-card-head"><h5>{% trans "No Sales in Period" %}</h5></div>
+      <div class="mg-card-body p-0">
+        {% if no_sales %}
+          <ul class="list-unstyled mb-0">
+            {% for p in no_sales %}
+              <li class="d-flex justify-content-between align-items-center py-2 px-3 border-bottom">
+                {% if perms.catalog.view_product %}
+                  <a class="text-decoration-none text-dark" href="{% url 'dashboard:product_detail' p.id %}">{{ p.name }}</a>
+                {% else %}
+                  <span class="text-dark">{{ p.name }}</span>
+                {% endif %}
+                <span class="text-muted small">{% blocktrans with sku=p.sku qty=p.stock_quantity %}SKU: {{ sku }} · {{ qty }} in stock{% endblocktrans %}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="mg-empty py-3"><i class="bi bi-check2-circle"></i>{% trans "All active products had sales." %}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

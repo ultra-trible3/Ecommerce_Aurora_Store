@@ -1,0 +1,86 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Products" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div>
+    <h1 class="mg-title">{% trans "Products" %}</h1>
+    <p class="mg-sub mb-0">{% blocktrans count counter=total_count %}{{ counter }} product matching this view.{% plural %}{{ counter }} products matching this view.{% endblocktrans %}</p>
+  </div>
+  <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:product_create' %}">
+    <i class="bi bi-plus-lg"></i> {% trans "New product" %}
+  </a>
+</div>
+
+<form class="mg-filterbar" method="get">
+  <div class="mg-search-inline">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% trans "Search name or SKU…" %}">
+  </div>
+  <select name="status" onchange="this.form.submit()">
+    <option value="">{% trans "All statuses" %}</option>
+    {% for code, label in status_choices %}
+      <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="category" onchange="this.form.submit()">
+    <option value="">{% trans "All categories" %}</option>
+    {% for c in categories %}
+      <option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+    {% endfor %}
+  </select>
+  <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Filter" %}</button>
+</form>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr>
+          <th>{% trans "Product" %}</th><th>{% trans "SKU" %}</th><th>{% trans "Category" %}</th><th>{% trans "Price" %}</th>
+          <th>{% trans "Stock" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in products %}
+          <tr>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <span style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:#e7ddcb;display:grid;place-items:center;flex-shrink:0">
+                  {% if product.main_image %}
+                    <img src="{{ product.main_image.url }}" alt="" style="width:100%;height:100%;object-fit:cover">
+                  {% else %}
+                    <i class="bi bi-image text-secondary"></i>
+                  {% endif %}
+                </span>
+                <a href="{% url 'dashboard:product_detail' product.pk %}">{{ product.name }}</a>
+              </div>
+            </td>
+            <td class="text-muted">{{ product.sku }}</td>
+            <td>{{ product.category.name }}</td>
+            <td class="fw-semibold">{{ product.current_price|currency }}</td>
+            <td>
+              <span class="mg-chip {% if product.stock_status == 'in' %}in{% elif product.stock_status == 'low' %}low{% else %}out{% endif %}">
+                {{ product.stock_quantity }}
+              </span>
+            </td>
+            <td><span class="mg-chip {% if product.status == 'active' %}approved{% else %}neutral{% endif %}">{{ product.get_status_display }}</span></td>
+            <td class="text-end">
+              <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:product_edit' product.pk %}">{% trans "Edit" %}</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">
+            <div class="mg-empty"><i class="bi bi-box-seam"></i>{% trans "No products found." %}</div>
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "management/_pagination.html" with page_obj=page_obj %}
+{% endblock %}

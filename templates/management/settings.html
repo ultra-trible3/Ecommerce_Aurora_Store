@@ -1,0 +1,72 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Settings" %}{% endblock %}
+
+{% block content %}
+<h1 class="mg-title">{% trans "Store settings" %}</h1>
+<p class="mg-sub">{% trans "Editable store configuration. Secrets and keys come from environment variables." %}</p>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <form method="post" class="mg-card">
+      {% csrf_token %}
+      <div class="mg-card-head"><h5>{% trans "General" %}</h5></div>
+      <div class="mg-card-body">
+        {% for row in settings_rows %}
+          <div class="mg-field">
+            <label for="id_{{ row.key }}">{{ row.label }}</label>
+            {% if row.textarea %}
+              <textarea id="id_{{ row.key }}" name="{{ row.key }}" rows="8"
+                        style="font-family:monospace">{{ row.value }}</textarea>
+            {% else %}
+              <input type="text" id="id_{{ row.key }}" name="{{ row.key }}" value="{{ row.value }}"
+                     placeholder="{{ row.help_text }}">
+            {% endif %}
+            <div class="helptext">{{ row.help_text }}</div>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="p-3 border-top">
+        <button class="mg-btn mg-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {% trans "Save settings" %}</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="mg-card mb-3">
+      <div class="mg-card-head"><h5>{% trans "Environment" %}</h5></div>
+      <div class="mg-card-body" style="font-size:14px">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">{% trans "Debug mode" %}</span>
+          <span class="mg-chip {% if env.debug %}pending{% else %}approved{% endif %}">{{ env.debug|yesno:"On,Off" }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">{% trans "Stripe" %}</span>
+          <span class="mg-chip {% if env.stripe %}approved{% else %}neutral{% endif %}">{{ env.stripe|yesno:"Configured,Not configured" }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted">{% trans "PayPal" %}</span>
+          <span class="mg-chip {% if env.paypal %}approved{% else %}neutral{% endif %}">{{ env.paypal|yesno:"Configured,Not configured" }}</span>
+        </div>
+        <div class="d-flex justify-content-between">
+          <span class="text-muted">{% trans "Database" %}</span>
+          <span>{{ env.database|cut:"django.db.backends." }}</span>
+        </div>
+        <p class="text-muted mb-0 mt-3" style="font-size:12.5px">
+          {% trans "Payment keys are read from <code>.env</code> only — they are never editable here." %}
+        </p>
+      </div>
+    </div>
+
+    <div class="mg-card">
+      <div class="mg-card-head"><h5>{% trans "Quick links" %}</h5></div>
+      <div class="mg-card-body d-grid gap-2">
+        <a class="mg-btn mg-btn-ghost" href="{% url 'admin:index' %}" target="_blank"><i class="bi bi-shield-lock"></i> {% trans "Django admin" %}</a>
+        <a class="mg-btn mg-btn-ghost" href="{% url 'core:home' %}" target="_blank"><i class="bi bi-box-arrow-up-right"></i> {% trans "View storefront" %}</a>
+        <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:subscribers' %}"><i class="bi bi-envelope-paper"></i> {% trans "Newsletter subscribers" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Reviews" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Review moderation" %}</h1>
+    <p class="mg-sub mb-0">{% blocktrans count counter=pending_count %}{{ counter }} review waiting for moderation.{% plural %}{{ counter }} reviews waiting for moderation.{% endblocktrans %}</p>
+  </div>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+  <a href="?status=pending" class="mg-chip {% if status_filter == 'pending' %}pending{% else %}neutral{% endif %}">{% trans "Pending" %}</a>
+  <a href="?status=approved" class="mg-chip {% if status_filter == 'approved' %}approved{% else %}neutral{% endif %}">{% trans "Approved" %}</a>
+  <a href="?status=rejected" class="mg-chip {% if status_filter == 'rejected' %}rejected{% else %}neutral{% endif %}">{% trans "Rejected" %}</a>
+  <a href="?status=" class="mg-chip {% if not status_filter %}pending{% else %}neutral{% endif %}">{% trans "All" %}</a>
+</div>
+
+<div class="d-grid gap-3">
+  {% for review in reviews %}
+    <div class="mg-card">
+      <div class="mg-card-body">
+        <div class="d-flex justify-content-between gap-3 flex-wrap">
+          <div>
+            <b>{{ review.title|default:review.body|truncatechars:60 }}</b>
+            <div class="text-warning" style="font-size:13px">
+              {% for _ in "12345"|make_list %}{% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}{% endfor %}
+              <span class="text-muted ms-1">{{ review.rating }}/5</span>
+            </div>
+          </div>
+          <div class="d-flex gap-2 align-items-start">
+            <span class="mg-chip {% if review.status == 'approved' %}approved{% elif review.status == 'pending' %}pending{% else %}rejected{% endif %}">
+              {{ review.get_status_display }}
+            </span>
+            {% if review.is_verified_purchase %}<span class="mg-chip neutral">{% trans "Verified purchase" %}</span>{% endif %}
+          </div>
+        </div>
+
+        <p class="my-2" style="font-size:14.5px">{{ review.body }}</p>
+
+        <div class="text-muted" style="font-size:12.5px">
+          {% trans "By" %} <b>{{ review.user.get_full_name|default:review.user.email }}</b>
+          {% trans "on" %} <a href="{% url 'dashboard:product_detail' review.product.pk %}">{{ review.product.name }}</a>
+          · {{ review.created_at|date:"M j, Y" }}
+        </div>
+
+        {% if review.admin_reply %}
+          <div class="mt-2 p-2 rounded" style="background:#f5efe1;font-size:13.5px;color:#4a3c36">
+            <b>{% trans "Your reply:" %}</b> {{ review.admin_reply }}
+          </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-3 flex-wrap">
+          {% if review.status != 'approved' %}
+            <form method="post" action="{% url 'dashboard:review_moderate' review.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="approve">
+              <input type="hidden" name="next_status" value="{{ status_filter }}">
+              <button class="mg-btn mg-btn-primary mg-btn-sm" type="submit"><i class="bi bi-check-lg"></i> {% trans "Approve" %}</button>
+            </form>
+          {% endif %}
+
+          {% if review.status != 'rejected' %}
+            <form method="post" action="{% url 'dashboard:review_moderate' review.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="reject">
+              <input type="hidden" name="next_status" value="{{ status_filter }}">
+              <button class="mg-btn mg-btn-danger mg-btn-sm" type="submit"><i class="bi bi-x-lg"></i> {% trans "Reject" %}</button>
+            </form>
+          {% endif %}
+
+          <form method="post" action="{% url 'dashboard:review_moderate' review.pk %}" class="flex-grow-1" style="min-width:280px">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reply">
+            <input type="hidden" name="next_status" value="{{ status_filter }}">
+            <div class="d-flex gap-2">
+              <input class="form-control" type="text" name="admin_reply"
+                     placeholder="{% trans "Public reply (publishes the review)" %}"
+                     value="{{ review.admin_reply }}">
+              <button class="mg-btn mg-btn-ghost mg-btn-sm" type="submit">{% trans "Reply" %}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% empty %}
+    <div class="mg-card"><div class="mg-empty"><i class="bi bi-star"></i>{% trans "No reviews in this view." %}</div></div>
+  {% endfor %}
+</div>
+
+{% include "management/_pagination.html" with page_obj=page_obj %}
+{% endblock %}

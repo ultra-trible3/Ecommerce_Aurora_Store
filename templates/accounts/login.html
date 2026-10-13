@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Sign in" %} | {{ SITE_NAME }}{% endblock %}
+
+{# Popup is re-armed when the visitor submits this form — see extra_js #}
+{% block deal_popup %}{% endblock %}
+
+{% block content %}
+<section class="au-section">
+  <div class="container-xxl">
+    <div class="row g-4 align-items-stretch justify-content-center">
+      <div class="col-lg-5 col-md-7">
+        <div class="au-form-card">
+          <span class="au-eyebrow"><i class="bi bi-person"></i> {% trans "Welcome back" %}</span>
+          <h1 class="h4 mb-1">{% trans "Sign in to your account" %}</h1>
+          <p class="text-muted small mb-4">{% trans "Track orders, save addresses and check out faster." %}</p>
+
+          {% if kicked %}
+            <div class="au-alert mb-3" style="background:#eff6ff;color:#1e40af;border-color:#bfdbfe">
+              <i class="bi bi-shield-lock"></i>
+              <div>{% trans "You were signed out because you signed in on another device." %}</div>
+            </div>
+          {% endif %}
+
+          <form method="post" action="{% url 'accounts:login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="au-alert mb-3" style="background:#fef2f2;color:#991b1b;border-color:#fecaca">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <div>{{ form.non_field_errors|first }}</div>
+              </div>
+            {% endif %}
+
+            {% for field in form %}
+              {% if field.name != 'remember' %}
+                <div class="mb-3">
+                  <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors|first }}</div>{% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <label class="form-check-label small">
+                {{ form.remember }} {{ form.remember.label }}
+              </label>
+              <a class="small" href="{% url 'accounts:password_reset' %}">{% trans "Forgot password?" %}</a>
+            </div>
+
+            <button class="btn btn-primary w-100 btn-lg" type="submit">{% trans "Sign in" %}</button>
+          </form>
+
+          <p class="text-center small text-muted mt-4 mb-0">
+            {% trans "New here?" %} <a href="{% url 'accounts:register' %}">{% trans "Create an account" %}</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="col-lg-5 d-none d-lg-block">
+        <div class="au-auth-aside">
+          <span class="badge bg-white text-primary mb-3">{% trans "Member perks" %}</span>
+          <h3>{% trans "One account, all the benefits" %}</h3>
+          <ul>
+            <li><i class="bi bi-check-circle-fill"></i> {% trans "Track every order in real time" %}</li>
+            <li><i class="bi bi-check-circle-fill"></i> {% trans "Save multiple delivery addresses" %}</li>
+            <li><i class="bi bi-check-circle-fill"></i> {% trans "Build a wishlist & get restock alerts" %}</li>
+            <li><i class="bi bi-check-circle-fill"></i> {% trans "Leave verified-purchase reviews" %}</li>
+            <li><i class="bi bi-check-circle-fill"></i> {% trans "Faster checkout with stored details" %}</li>
+          </ul>
+          <p class="small mt-4 mb-0" style="color:rgba(255,255,255,.75)">
+            {% trans "“Fast, painless and the tracking page is genuinely useful.” — recent customer" %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var form = document.querySelector('form[action*="login"]');
+  if (!form) return;
+  /* Re-arm the deal popup so it greets the visitor after signing in */
+  form.addEventListener("submit", function () {
+    try {
+      Object.keys(sessionStorage).forEach(function (key) {
+        if (key.indexOf("deal_popup_seen_") === 0) sessionStorage.removeItem(key);
+      });
+    } catch (e) {}
+  });
+})();
+</script>
+{% endblock %}

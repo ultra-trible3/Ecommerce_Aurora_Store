@@ -1,0 +1,137 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Inventory" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Inventory" %}</h1>
+    <p class="mg-sub mb-0">{% blocktrans with units=totals.units %}{{ units }} units across the catalogue.{% endblocktrans %}</p>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="mg-card mg-kpi">
+      <div class="kpi-label">{% trans "Total units" %}</div>
+      <div class="kpi-value">{{ totals.units }}</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="mg-card mg-kpi">
+      <div class="kpi-label">{% trans "Low stock" %}</div>
+      <div class="kpi-value" style="color:#8a6a2f">{{ totals.low }}</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="mg-card mg-kpi">
+      <div class="kpi-label">{% trans "Out of stock" %}</div>
+      <div class="kpi-value" style="color:#790d16">{{ totals.out }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-8">
+    <form class="mg-filterbar" method="get">
+      <div class="mg-search-inline">
+        <i class="bi bi-search"></i>
+        <input type="search" name="q" value="{{ q }}" placeholder="{% trans "Search product or SKU…" %}">
+      </div>
+      <select name="state" onchange="this.form.submit()">
+        <option value="">{% trans "Any stock level" %}</option>
+        <option value="in" {% if state == "in" %}selected{% endif %}>{% trans "In stock" %}</option>
+        <option value="low" {% if state == "low" %}selected{% endif %}>{% trans "Low stock" %}</option>
+        <option value="out" {% if state == "out" %}selected{% endif %}>{% trans "Out of stock" %}</option>
+      </select>
+      <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Filter" %}</button>
+    </form>
+
+    <div class="mg-card">
+      <div class="table-responsive">
+        <table class="mg-table">
+          <thead>
+            <tr><th>{% trans "Product" %}</th><th>{% trans "SKU" %}</th><th>{% trans "Stock" %}</th><th>{% trans "Min level" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Actions" %}</th></tr>
+          </thead>
+          <tbody>
+            {% for product in products %}
+              <tr>
+                <td><a href="{% url 'dashboard:product_detail' product.pk %}">{{ product.name }}</a></td>
+                <td class="text-muted">{{ product.sku }}</td>
+                <td class="fw-bold">{{ product.stock_quantity }}</td>
+                <td class="text-muted">{{ product.min_stock_level }}</td>
+                <td>
+                  <span class="mg-chip {% if product.stock_status == 'in' %}in{% elif product.stock_status == 'low' %}low{% else %}out{% endif %}">
+                    {% if product.stock_status == 'in' %}{% trans "In stock" %}{% elif product.stock_status == 'low' %}{% trans "Low" %}{% else %}{% trans "Out" %}{% endif %}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:inventory' %}?product={{ product.pk }}">{% trans "Adjust" %}</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="6"><div class="mg-empty"><i class="bi bi-clipboard-data"></i>{% trans "No products found." %}</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% include "management/_pagination.html" with page_obj=page_obj q=q %}
+  </div>
+
+  <div class="col-lg-4">
+    <div class="mg-card mb-3">
+      <div class="mg-card-head"><h5>{% trans "Adjust stock" %}</h5></div>
+      <div class="mg-card-body">
+        <form method="post" action="{% url 'dashboard:inventory_adjust' %}">
+          {% csrf_token %}
+          <div class="mg-field">
+            <label>{% trans "Product" %}</label>
+            {{ form.product }}
+            {{ form.product.errors }}
+          </div>
+          <div class="mg-field">
+            <label>{% trans "Adjustment type" %}</label>
+            {{ form.transaction_type }}
+          </div>
+          <div class="mg-field">
+            <label>{% trans "Quantity" %}</label>
+            {{ form.quantity }}
+            {{ form.quantity.errors }}
+            {% if form.quantity.help_text %}<div class="helptext">{{ form.quantity.help_text }}</div>{% endif %}
+          </div>
+          <div class="mg-field">
+            <label>{% trans "Note" %}</label>
+            {{ form.note }}
+          </div>
+          <button class="mg-btn mg-btn-primary w-100" type="submit">{% trans "Apply adjustment" %}</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="mg-card">
+      <div class="mg-card-head"><h5>{% trans "Recent movements" %}</h5></div>
+      <div class="mg-card-body">
+        {% for m in movements %}
+          <div class="d-flex justify-content-between gap-2 mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}" style="font-size:13.5px">
+            <div>
+              <b>{{ m.product.name }}</b>
+              <div class="text-muted" style="font-size:12px">
+                {{ m.get_transaction_type_display }} · {{ m.created_at|date:"M j, g:i A" }}
+              </div>
+            </div>
+            <span class="mg-chip {% if m.quantity < 0 %}rejected{% else %}approved{% endif %}">
+              {{ m.quantity }}
+            </span>
+          </div>
+        {% empty %}
+          <div class="mg-empty py-3"><i class="bi bi-arrow-left-right"></i>{% trans "No movements yet." %}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

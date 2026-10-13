@@ -1,0 +1,10 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+{% block title %}{% trans "Confirm your email" %}{% endblock %}
+{% block content %}
+  <h1>{% trans "Confirm your email" %}</h1>
+  <p>{% blocktrans with name=user.get_full_name|default:user.username %}Hi {{ name }},{% endblocktrans %}</p>
+  <p>{% blocktrans with email=user.email %}One quick step: confirm <b>{{ email }}</b> so we can send you order updates and keep your account secure.{% endblocktrans %}</p>
+  <p><a class="btn" href="{{ link }}">{% trans "Confirm my email" %}</a></p>
+  <p class="muted">{% blocktrans with site=SITE_NAME %}This link expires shortly. If you did not create a {{ site }} account you can safely ignore this email.{% endblocktrans %}</p>
+{% endblock %}

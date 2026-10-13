@@ -1,0 +1,21 @@
+{{ SITE_NAME }} — Order {{ order.order_number }}
+
+Hi {% if order.shipping_full_name %}{{ order.shipping_full_name }}{% else %}there{% endif %},
+
+Your package is on its way. You can follow its progress from your order page.
+
+Order {{ order.order_number }} placed {{ order.created_at|date:"F j, Y" }}
+
+Items:
+{% for item in items %}- {{ item.quantity }} x {{ item.display_name }} — {{ CURRENCY_SYMBOL }}{{ item.line_total }}
+{% endfor %}
+
+Subtotal: {{ CURRENCY_SYMBOL }}{{ order.subtotal }}
+{% if order.discount %}Discount: -{{ CURRENCY_SYMBOL }}{{ order.discount }}
+{% endif %}Shipping: {{ CURRENCY_SYMBOL }}{{ order.shipping_cost }}
+Tax: {{ CURRENCY_SYMBOL }}{{ order.tax }}
+Total: {{ CURRENCY_SYMBOL }}{{ order.total }}
+
+View your order: {{ SITE_URL }}/orders/{{ order.order_number }}/
+
+— {{ SITE_NAME }}, {{ SUPPORT_EMAIL }}

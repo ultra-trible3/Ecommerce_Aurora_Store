@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% trans "My account" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+    <div class="row g-4">
+      <div class="col-lg-3">
+        {% include "includes/account_nav.html" with nav="dashboard" %}
+      </div>
+
+      <div class="col-lg-9">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+          <div>
+            <h1 class="h4 mb-1">{% blocktrans with name=user.first_name|default:user.username %}Hi {{ name }} 👋{% endblocktrans %}</h1>
+            <p class="text-muted mb-0">{% trans "Here is what is happening with your account." %}</p>
+          </div>
+          <a href="{% url 'catalog:shop' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-bag-plus"></i> {% trans "Continue shopping" %}
+          </a>
+        </div>
+
+        {% if not user.email_verified %}
+          <div class="au-alert mb-4" style="background:#fffbeb;color:#92400e;border-color:#fde68a">
+            <i class="bi bi-envelope-exclamation"></i>
+            <div class="flex-grow-1">
+              <b>{% trans "Confirm your email address" %}</b><br>
+              <span class="small">{% blocktrans with email=user.email %}We sent a confirmation link to <b>{{ email }}</b>.{% endblocktrans %}</span>
+            </div>
+            <form method="post" action="{% url 'accounts:resend_verification' %}" class="ms-auto">
+              {% csrf_token %}
+              <button class="btn btn-sm btn-warning" type="submit">{% trans "Resend email" %}</button>
+            </form>
+          </div>
+        {% endif %}
+
+        <div class="row g-3 mb-4">
+          <div class="col-sm-6 col-xl-3">
+            <div class="au-card p-3 text-center">
+              <div class="fs-3 fw-bold text-ink">{{ stats.orders }}</div>
+              <div class="small text-muted">{% trans "Total orders" %}</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xl-3">
+            <div class="au-card p-3 text-center">
+              <div class="fs-3 fw-bold" style="color:var(--au-primary)">{{ stats.in_progress }}</div>
+              <div class="small text-muted">{% trans "In progress" %}</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xl-3">
+            <div class="au-card p-3 text-center">
+              <div class="fs-3 fw-bold text-ink">{{ stats.addresses }}</div>
+              <div class="small text-muted">{% trans "Saved addresses" %}</div>
+            </div>
+          </div>
+          <div class="col-sm-6 col-xl-3">
+            <div class="au-card p-3 text-center">
+              <div class="fs-3 fw-bold text-ink">{{ stats.reviews }}</div>
+              <div class="small text-muted">{% trans "Reviews written" %}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="au-card p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">{% trans "Recent orders" %}</h5>
+            <a href="{% url 'orders:list' %}" class="small">{% trans "View all" %}</a>
+          </div>
+
+          {% if orders %}
+            <div class="table-responsive">
+              <table class="table align-middle mb-0">
+                <thead>
+                  <tr class="text-muted small">
+                    <th>{% trans "Order" %}</th><th>{% trans "Date" %}</th><th>{% trans "Status" %}</th><th class="text-end">{% trans "Total" %}</th><th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for order in orders %}
+                    <tr>
+                      <td><a href="{% url 'orders:detail' order.order_number %}" class="fw-semibold">{{ order.order_number }}</a></td>
+                      <td class="text-muted">{{ order.created_at|date:"M j, Y" }}</td>
+                      <td><span class="au-status {{ order.status }}">{{ order.get_status_display }}</span></td>
+                      <td class="text-end fw-semibold">{{ order.total|currency }}</td>
+                      <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'orders:detail' order.order_number %}">{% trans "View" %}</a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            {% trans "No orders yet" as empty_title %}
+            {% trans "When you place your first order it will show up here." as empty_text %}
+            {% trans "Start shopping" as empty_action %}
+            {% include "includes/empty_state.html" with icon="bi-box-seam" title=empty_title text=empty_text action_url="/shop/" action_label=empty_action %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

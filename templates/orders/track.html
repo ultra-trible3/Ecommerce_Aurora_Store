@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load i18n static core_tags %}
+
+{% block title %}{% trans "Track Order" %} {{ order.order_number }} | {{ SITE_NAME }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .track-container { max-width: 800px; margin: 0 auto; }
+  .track-header { text-align: center; padding: 2rem 0; }
+  .track-header .order-number { font-family: monospace; background: #f5efe1; padding: 0.5rem 1rem; border-radius: 8px; font-size: 1.25rem; font-weight: 700; color: #790d16; }
+  .track-header .order-date { color: #7a6a62; margin-top: 0.5rem; }
+  .verify-form { max-width: 400px; margin: 2rem auto; padding: 2rem; background: #fff; border: 1px solid #e7ddcb; border-radius: 12px; }
+  .verify-form .form-label { font-weight: 600; color: #33141b; margin-bottom: 0.5rem; }
+  .verify-form .form-control { border: 1px solid #e7ddcb; border-radius: 8px; padding: 0.75rem 1rem; }
+  .verify-form .form-control:focus { border-color: #790d16; box-shadow: 0 0 0 3px rgba(121, 13, 22, 0.15); }
+  .verify-form .btn { width: 100%; margin-top: 1rem; }
+  .error-msg { color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+  .track-timeline { position: relative; padding-left: 2rem; }
+  .track-timeline::before { content: ""; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: #e7ddcb; }
+  .track-step { position: relative; padding: 1.5rem 0 1.5rem 2.5rem; min-height: 80px; }
+  .track-step:last-child { padding-bottom: 0; }
+  .track-step::before { content: ""; position: absolute; left: -2rem; top: 1.75rem; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #e7ddcb; background: #fff; z-index: 1; }
+  .track-step.done::before { background: #15803d; border-color: #15803d; }
+  .track-step.current::before { background: #790d16; border-color: #790d16; box-shadow: 0 0 0 4px rgba(121, 13, 22, 0.2); }
+  .track-step .step-icon { position: absolute; left: -1.9rem; top: 1.85rem; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; z-index: 2; }
+  .track-step.done .step-icon { color: #fff; }
+  .track-step.current .step-icon { color: #fff; }
+  .track-step .step-content { background: #fff; border: 1px solid #e7ddcb; border-radius: 12px; padding: 1.25rem; }
+  .track-step.done .step-content { border-color: #dcfce7; background: #f0fdf4; }
+  .track-step.current .step-content { border-color: #e5d3af; background: #fefce8; }
+  .track-step .step-label { font-weight: 700; color: #33141b; font-size: 1.05rem; }
+  .track-step .step-time { color: #7a6a62; font-size: 0.9rem; margin-top: 0.25rem; }
+  .track-step .step-time.pending { color: #92400e; font-style: italic; }
+  .track-summary { background: #f5efe1; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+  .track-summary .row { align-items: center; }
+  .track-summary .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #96877e; font-weight: 700; }
+  .track-summary .value { font-size: 1.1rem; font-weight: 600; color: #33141b; }
+  .track-items { margin-top: 2rem; }
+  .track-item { display: flex; gap: 1rem; padding: 1rem; background: #fff; border: 1px solid #e7ddcb; border-radius: 10px; margin-bottom: 0.75rem; align-items: center; }
+  .track-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
+  .track-item .item-info { flex: 1; min-width: 0; }
+  .track-item .item-name { font-weight: 600; color: #33141b; }
+  .track-item .item-qty { color: #7a6a62; font-size: 0.9rem; }
+  .track-item .item-price { font-weight: 700; color: #790d16; font-variant-numeric: tabular-nums; }
+  @media (max-width: 576px) {
+    .track-timeline { padding-left: 1.5rem; }
+    .track-step { padding-left: 2rem; }
+    .track-step::before { left: -1.7rem; width: 20px; height: 20px; top: 1.5rem; }
+    .track-step .step-icon { left: -1.6rem; top: 1.6rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="au-section">
+  <div class="container-xxl">
+    <div class="track-container">
+      
+      {% if needs_verification %}
+        <div class="verify-form">
+          {% if error %}
+            <div class="error-msg">{{ error }}</div>
+          {% endif %}
+          <h3 class="text-center mb-4">{% trans "Track Order" %} <span class="order-number">{{ order.order_number }}</span></h3>
+          <p class="text-center text-muted mb-4">
+            {% trans "Enter the email or phone used at checkout to view tracking details." %}
+          </p>
+          <form method="get" action="">
+            <div class="mb-3">
+              <label class="form-label">{% trans "Email" %}</label>
+              <input type="email" name="email" class="form-control" placeholder="you@example.com" autocomplete="email">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{% trans "Phone" %}</label>
+              <input type="tel" name="phone" class="form-control" placeholder="+1 (555) 000-0000" autocomplete="tel">
+            </div>
+            <button type="submit" class="btn btn-primary">{% trans "Track Order" %}</button>
+          </form>
+          {% if has_account and not user.is_authenticated %}
+            <p class="text-center mt-3 mb-0" style="font-size:14px">
+              {% trans "Placed with an account?" %}
+              <a href="{% url 'accounts:login' %}?next={% url 'orders:track' order.order_number %}">{% trans "Sign in to track" %}</a>
+            </p>
+          {% endif %}
+        </div>
+      
+      {% else %}
+        <!-- Header -->
+        <div class="track-header">
+          <div class="order-number">{{ order.order_number }}</div>
+          <div class="order-date">{% trans "Placed" %} {{ order.created_at|date:"F j, Y · g:i A" }}</div>
+        </div>
+
+        <!-- Summary -->
+        <div class="track-summary row g-3">
+          <div class="col-sm-6 col-lg-3">
+            <div class="label">{% trans "Status" %}</div>
+            <div class="value">
+              <span class="au-status {{ order.status }}">{{ order.get_status_display }}</span>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="label">{% trans "Payment" %}</div>
+            <div class="value">
+              {% if order.is_paid %}
+                <span class="badge bg-success-subtle text-success"><i class="bi bi-check2-circle"></i> {% trans "Paid" %}</span>
+              {% else %}
+                <span class="badge bg-warning-subtle text-warning"><i class="bi bi-clock"></i> {% trans "Pending" %}</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="label">{% trans "Shipping" %}</div>
+            <div class="value">{{ order.shipping_method_name|default:"—" }}</div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="label">{% trans "Total" %}</div>
+            <div class="value">{{ order.total|currency }}</div>
+          </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="track-timeline">
+          {% for step in steps %}
+          <div class="track-step {% if step.done %}done{% elif step.current %}current{% endif %}">
+            <div class="step-icon">
+              {% if step.done %}<i class="bi bi-check"></i>
+              {% elif step.current %}<i class="bi bi-arrow-right"></i>
+              {% else %}<i class="bi bi-circle"></i>{% endif %}
+            </div>
+            <div class="step-content">
+              <div class="step-label">{{ step.label }}</div>
+              <div class="step-time {% if not step.timestamp %}pending{% endif %}">
+                {% if step.timestamp %}
+                  {{ step.timestamp|date:"F j, Y · g:i A" }}
+                {% else %}
+                  {% trans "Pending" %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Items -->
+        <div class="track-items">
+          <h5 class="mb-3">{% trans "Order Items" %}</h5>
+          {% for item in items %}
+          <div class="track-item">
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.product_name }}">
+            {% else %}
+              <div style="width:60px;height:60px;background:#f5efe1;border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                <i class="bi bi-box-seam" style="font-size:1.5rem;color:#aec4d4;"></i>
+              </div>
+            {% endif %}
+            <div class="item-info">
+              <div class="item-name">{{ item.display_name }}</div>
+              <div class="item-qty">{% blocktrans with qty=item.quantity sku=item.product_sku %}Qty: {{ qty }} · SKU: {{ sku }}{% endblocktrans %}</div>
+            </div>
+            <div class="item-price">{{ item.line_total|currency }}</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Actions -->
+        <div class="text-center mt-4">
+          {% if user.is_authenticated %}
+            <a href="{% url 'orders:detail' order.order_number %}" class="btn btn-primary">{% trans "View Full Details" %}</a>
+          {% else %}
+            <a href="{% url 'accounts:login' %}?next={% url 'orders:track' order.order_number %}" class="btn btn-primary">{% trans "Sign In for Full Details" %}</a>
+          {% endif %}
+        </div>
+      {% endif %}
+      
+    </div>
+  </div>
+</section>
+{% endblock %}

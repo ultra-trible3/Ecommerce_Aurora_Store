@@ -1,0 +1,154 @@
+{% load static i18n core_tags %}
+{% is_rtl as IS_RTL %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" class="mg-root" {% if IS_RTL %}dir="rtl"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe1">
+  <script>
+    /* Apply the saved (or OS) theme before first paint — no light/dark flash. */
+    (function () {
+      try {
+        var t = localStorage.getItem("au-theme");
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark" : "light";
+        }
+        var el = document.documentElement;
+        el.setAttribute("data-theme", t);
+        el.setAttribute("data-bs-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <title>{% block title %}{% trans "Management" %}{% endblock %} | {{ SITE_NAME }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'vendor/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/css/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static_v 'css/main.css' %}">
+  <link rel="stylesheet" href="{% static 'css/management.css' %}">
+  {% if IS_RTL %}
+  <link rel="stylesheet" href="{% static_v 'css/rtl.css' %}">
+  {% endif %}
+  <link rel="stylesheet" href="{% static_v 'css/dark.css' %}">
+  <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="mg-body">
+  <div class="d-flex">
+    {% include "management/_sidebar.html" %}
+
+    <div class="mg-main">
+      <header class="mg-topbar">
+        <button class="mg-icon-btn mg-toggle" type="button" id="mg-toggle" aria-label="{% trans 'Toggle navigation' %}">
+          <i class="bi bi-list"></i>
+        </button>
+
+        {% if perms.catalog.view_product %}
+          <form class="mg-search" action="{% url 'dashboard:products' %}" method="get">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" value="{{ request.GET.q|default:'' }}"
+                   placeholder="{% trans 'Search products, SKU…' %}" aria-label="{% trans 'Search' %}">
+          </form>
+        {% endif %}
+
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <button class="mg-icon-btn" type="button"
+                  data-theme-toggle
+                  data-to-dark="{% trans 'Switch to dark mode' %}"
+                  data-to-light="{% trans 'Switch to light mode' %}"
+                  aria-pressed="false"
+                  aria-label="{% trans 'Switch to dark mode' %}"
+                  title="{% trans 'Switch to dark mode' %}">
+            <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+          </button>
+          {% if perms.notifications.view_notification %}
+            <a class="mg-icon-btn" href="{% url 'dashboard:notifications' %}" title="{% trans 'Notifications' %}">
+              <i class="bi bi-bell"></i>
+              {% if portal_unread %}
+                <span class="dot"></span>
+              {% endif %}
+            </a>
+          {% endif %}
+          <a class="mg-icon-btn" href="{% url 'core:home' %}" target="_blank" title="{% trans 'View storefront' %}">
+            <i class="bi bi-box-arrow-up-right"></i>
+          </a>
+          <div class="mg-lang">
+            {% language_switcher %}
+          </div>
+
+          <div class="mg-user">
+            <span class="au-avatar">
+              {% if user.profile_image %}<img src="{{ user.profile_image.url }}" alt="">{% else %}{{ user.initials }}{% endif %}
+            </span>
+            <div class="who">
+              <b>{{ user.get_full_name|default:user.username }}</b>
+              {% trans "Staff" as STAFF_LABEL %}
+              <span>{{ user.get_role_display|default:STAFF_LABEL }}</span>
+            </div>
+            <form method="post" action="{% url 'accounts:logout' %}">
+              {% csrf_token %}
+              <button class="mg-icon-btn" type="submit" title="{% trans 'Sign out' %}">
+                <i class="bi bi-box-arrow-right"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+
+      <main class="mg-content">
+        {% include "includes/messages.html" %}
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+  <div class="mg-backdrop" id="mg-backdrop"></div>
+
+  {% include "includes/confirm_modal.html" %}
+  <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static 'vendor/js/chart.umd.min.js' %}"></script>
+  <script src="{% static 'js/confirm.js' %}" defer></script>
+  <script src="{% static_v 'js/theme.js' %}" defer></script>
+  <script src="{% static 'js/i18n.js' %}" defer></script>
+  <script>
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+    window.SITE_CURRENCY = "{{ CURRENCY_SYMBOL }}";
+
+    const mgMq = window.matchMedia("(max-width: 991.98px)");
+    const mgSidebar = document.querySelector(".mg-sidebar");
+    const mgBackdrop = document.getElementById("mg-backdrop");
+
+    if (!mgMq.matches && localStorage.getItem("mgNav") === "collapsed") {
+      document.body.classList.add("mg-nav-collapsed");
+    }
+    function mgCloseDrawer() {
+      mgSidebar?.classList.remove("show");
+      mgBackdrop?.classList.remove("show");
+    }
+    function mgToggleNav() {
+      if (mgMq.matches) {
+        const open = mgSidebar?.classList.toggle("show");
+        mgBackdrop?.classList.toggle("show", !!open);
+      } else {
+        const collapsed = document.body.classList.toggle("mg-nav-collapsed");
+        localStorage.setItem("mgNav", collapsed ? "collapsed" : "open");
+      }
+    }
+    ["mg-toggle", "mg-side-toggle"].forEach((id) =>
+      document.getElementById(id)?.addEventListener("click", mgToggleNav)
+    );
+    mgBackdrop?.addEventListener("click", mgCloseDrawer);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") mgCloseDrawer(); });
+    mgSidebar?.querySelectorAll("a").forEach((a) => a.addEventListener("click", mgCloseDrawer));
+    mgMq.addEventListener("change", (e) => {
+      mgCloseDrawer();
+      if (e.matches) {
+        document.body.classList.remove("mg-nav-collapsed");
+      } else if (localStorage.getItem("mgNav") === "collapsed") {
+        document.body.classList.add("mg-nav-collapsed");
+      }
+    });
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

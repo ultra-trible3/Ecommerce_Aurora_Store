@@ -1,0 +1,41 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% if mode == 'create' %}{% trans "New brand" %}{% else %}{% trans "Edit brand" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% if mode == 'create' %}{% trans "New brand" %}{% else %}{% blocktrans with name=brand.name %}Edit “{{ name }}”{% endblocktrans %}{% endif %}</h1>
+    <p class="mg-sub mb-0">{% trans "Logos appear on brand pages and product cards." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:brands' %}"><i class="bi bi-arrow-left"></i> {% trans "Back" %}</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="mg-card" style="max-width:680px">
+  {% csrf_token %}
+  <div class="mg-card-body">
+    {% for field in form %}
+      {% if field.name == "is_active" %}
+        <div class="form-check mb-2">
+          {{ field }}
+          <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        </div>
+      {% else %}
+        <div class="mg-field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+        </div>
+      {% endif %}
+    {% endfor %}
+    {% if brand and brand.logo %}
+      <img src="{{ brand.logo.url }}" alt="" style="max-width:180px;border-radius:10px">
+    {% endif %}
+  </div>
+  <div class="d-flex gap-2 p-3 border-top">
+    <button class="mg-btn mg-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {% trans "Save" %}</button>
+    <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:brands' %}">{% trans "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

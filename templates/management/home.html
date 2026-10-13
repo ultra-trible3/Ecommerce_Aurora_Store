@@ -1,0 +1,323 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Dashboard" %}{% endblock %}
+
+{% block content %}
+<h1 class="mg-title">{% trans "Dashboard" %}</h1>
+<p class="mg-sub">{% trans "Store performance at a glance — updated live from your data." %}</p>
+
+<div class="row g-3 mb-4">
+  {% if perms.orders.view_order %}
+  <div class="col-sm-6 col-xl-3">
+    <div class="mg-card mg-kpi kpi-wine h-100">
+      <div class="kpi-top">
+        <span class="kpi-label">{% trans "Revenue (all time)" %}</span>
+        <span class="kpi-icon"><i class="bi bi-cash-stack"></i></span>
+      </div>
+      <div class="kpi-value">{{ stats.revenue_total|currency }}</div>
+      <div class="kpi-delta text-muted">{% blocktrans with paid=stats.revenue_paid|currency %}Paid: {{ paid }}{% endblocktrans %}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="mg-card mg-kpi kpi-steel h-100">
+      <div class="kpi-top">
+        <span class="kpi-label">{% trans "Revenue this month" %}</span>
+        <span class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></span>
+      </div>
+      <div class="kpi-value">{{ stats.revenue_month|currency }}</div>
+      <div class="kpi-delta text-muted">{% blocktrans count counter=stats.orders_month %}{{ counter }} order{% plural %}{{ counter }} orders{% endblocktrans %}</div>
+    </div>
+  </div>
+  {% endif %}
+  <div class="col-sm-6 col-xl-3">
+    <div class="mg-card mg-kpi kpi-sand h-100">
+      <div class="kpi-top">
+        <span class="kpi-label">{% trans "Active orders" %}</span>
+        <span class="kpi-icon"><i class="bi bi-truck"></i></span>
+      </div>
+      <div class="kpi-value">{{ stats.orders_pending }}</div>
+      <div class="kpi-delta text-muted">{% blocktrans with today=stats.orders_today %}{{ today }} placed today{% endblocktrans %}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="mg-card mg-kpi kpi-ink h-100">
+      <div class="kpi-top">
+        <span class="kpi-label">{% trans "Customers" %}</span>
+        <span class="kpi-icon"><i class="bi bi-people"></i></span>
+      </div>
+      <div class="kpi-value">{{ stats.customers_total }}</div>
+      <div class="kpi-delta text-muted">{% blocktrans with month=stats.customers_month %}+{{ month }} this month{% endblocktrans %}</div>
+    </div>
+  </div>
+</div>
+
+{% if perms.orders.view_order %}
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="mg-card h-100">
+      <div class="mg-card-head">
+        <h5>{% trans "Revenue — last 14 days" %}</h5>
+        <span class="mg-chip neutral">{% blocktrans count counter=stats.awaiting_reviews %}{{ counter }} review pending{% plural %}{{ counter }} reviews pending{% endblocktrans %}</span>
+      </div>
+      <div class="mg-card-body">
+        <div class="mg-chart"><canvas id="revenueChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="mg-card h-100">
+      <div class="mg-card-head"><h5>{% trans "Orders by status" %}</h5></div>
+      <div class="mg-card-body">
+        <div class="mg-chart"><canvas id="statusChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  {% if perms.orders.view_order %}
+  <div class="col-lg-8">
+    <div class="mg-card">
+      <div class="mg-card-head">
+        <h5>{% trans "Recent orders" %}</h5>
+        <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:orders' %}">{% trans "View all" %}</a>
+      </div>
+      <div class="table-responsive">
+        <table class="mg-table">
+          <thead>
+            <tr><th>{% trans "Order" %}</th><th>{% trans "Customer" %}</th><th>{% trans "Status" %}</th><th>{% trans "Payment" %}</th><th class="text-end">{% trans "Total" %}</th></tr>
+          </thead>
+          <tbody>
+            {% for order in recent_orders %}
+              <tr>
+                <td><a href="{% url 'dashboard:order_detail' order.order_number %}">{{ order.order_number }}</a></td>
+                <td>
+                  {{ order.customer_name }}<br>
+                  <span class="text-muted" style="font-size:12.5px">{{ order.created_at|date:"M j, g:i A" }}</span>
+                </td>
+                <td><span class="mg-chip {{ order.status }}">{{ order.get_status_display }}</span></td>
+                <td><span class="mg-chip {% if order.is_paid %}paid{% else %}neutral{% endif %}">{{ order.get_payment_status_display }}</span></td>
+                <td class="text-end fw-bold">{{ order.total|currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5">
+                <div class="mg-empty"><i class="bi bi-receipt"></i>{% trans "No orders yet." %}</div>
+              </td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="col-lg-4">
+    {% if perms.orders.view_order %}
+    <div class="mg-card mb-3">
+      <div class="mg-card-head">
+        <h5>{% trans "Top sellers" %}</h5>
+      </div>
+      <div class="mg-card-body p-0">
+        <table class="mg-table">
+          <tbody>
+            {% for row in top_products %}
+              <tr>
+                <td>{{ row.items__product_name|default:"—" }}</td>
+                <td class="text-end text-muted">{% blocktrans with units=row.units_sold %}{{ units }} sold{% endblocktrans %}</td>
+                <td class="text-end fw-bold">{{ row.revenue|currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td><div class="mg-empty py-3">{% trans "No sales yet." %}</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="mg-card">
+      <div class="mg-card-head">
+        <h5>{% trans "Needs attention" %}</h5>
+        {% if perms.inventory.view_stocktransaction %}
+          <a class="mg-btn mg-btn-ghost mg-btn-sm" href="{% url 'dashboard:inventory' %}">{% trans "Inventory" %}</a>
+        {% endif %}
+      </div>
+      <div class="mg-card-body">
+        {% if low_stock or pending_reviews %}
+          <ul class="list-unstyled mb-0 d-grid gap-3">
+            {% for product in low_stock %}
+              <li class="d-flex justify-content-between align-items-center gap-2">
+                {% if perms.catalog.view_product %}
+                  <a class="text-decoration-none text-dark fw-semibold" href="{% url 'dashboard:product_detail' product.pk %}">{{ product.name }}</a>
+                {% else %}
+                  <span class="text-dark fw-semibold">{{ product.name }}</span>
+                {% endif %}
+                <span class="mg-chip {% if product.stock_quantity == 0 %}out{% else %}low{% endif %}">
+                  {% blocktrans with qty=product.stock_quantity %}{{ qty }} left{% endblocktrans %}
+                </span>
+              </li>
+            {% endfor %}
+            {% for review in pending_reviews %}
+              <li class="d-flex justify-content-between align-items-center gap-2">
+                <span class="text-dark">{{ review.product.name|truncatechars:26 }}</span>
+                {% if perms.reviews.view_review %}
+                  <a class="mg-btn mg-btn-ghost mg-btn-sm"
+                     href="{% url 'dashboard:reviews' %}?status=pending">{% trans "Review" %}</a>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="mg-empty py-2"><i class="bi bi-check2-circle"></i>{% trans "All clear." %}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if perms.orders.view_order %}
+<div class="mg-card">
+  <div class="mg-card-head">
+    <h5>{% trans "Monthly revenue" %}</h5>
+  </div>
+  <div class="mg-card-body">
+    <div class="mg-chart"><canvas id="monthChart"></canvas></div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{{ revenue_series|json_script:"revenue-data" }}
+{{ monthly_series|json_script:"month-data" }}
+{{ status_breakdown|json_script:"status-data" }}
+<script>
+  const CURRENCY = window.SITE_CURRENCY || "$";
+  const revenue = JSON.parse(document.getElementById("revenue-data").textContent);
+  const months = JSON.parse(document.getElementById("month-data").textContent);
+  const statuses = JSON.parse(document.getElementById("status-data").textContent);
+
+  function money(v) { return CURRENCY + Number(v).toLocaleString(); }
+
+  const PALETTE = {
+    wine: "#790d16",
+    wineDark: "#5c0a11",
+    wineLight: "#a3252f",
+    sand: "#e5d3af",
+    sandDeep: "#a98846",
+    steel: "#5b7f96",
+    steelLight: "#aec4d4",
+    ink: "#33141b",
+    emerald: "#10b981",
+    amber: "#f59e0b",
+    blue: "#3b82f6",
+    red: "#ef4444",
+  };
+  const gridColor = "rgba(121, 13, 22, .14)";
+  const tickColor = "#7a6a62";
+
+  if (document.getElementById("revenueChart")) new Chart(document.getElementById("revenueChart"), {
+    type: "line",
+    data: {
+      labels: revenue.map(r => r.label),
+      datasets: [{
+        label: "{% trans "Revenue" %}",
+        data: revenue.map(r => r.value),
+        borderColor: PALETTE.wine,
+        borderWidth: 2.5,
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, ctx.chart.height);
+          g.addColorStop(0, "rgba(121, 13, 22, .42)");
+          g.addColorStop(.55, "rgba(163, 37, 47, .18)");
+          g.addColorStop(1, "rgba(121, 13, 22, 0)");
+          return g;
+        },
+        fill: true,
+        tension: .35,
+        pointRadius: 3.5,
+        pointHoverRadius: 6,
+        pointBackgroundColor: "#fff",
+        pointBorderColor: PALETTE.wine,
+        pointBorderWidth: 2.5,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => money(c.parsed.y) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: tickColor, maxRotation: 0, autoSkip: true } },
+        y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: (v) => CURRENCY + v } },
+      },
+    },
+  });
+
+  if (statuses.length && document.getElementById("statusChart")) {
+    const statusColors = {
+      delivered: PALETTE.emerald,
+      pending: PALETTE.amber, confirmed: PALETTE.amber, processing: PALETTE.amber,
+      shipped: PALETTE.blue, packed: PALETTE.blue, out_for_delivery: PALETTE.blue,
+      cancelled: PALETTE.red, refunded: PALETTE.red, returned: PALETTE.red,
+      rejected: PALETTE.red, failed: PALETTE.red,
+    };
+    const fallbackColors = [PALETTE.wine, PALETTE.steel, PALETTE.sandDeep, PALETTE.steelLight];
+    let fallbackIndex = 0;
+    new Chart(document.getElementById("statusChart"), {
+      type: "doughnut",
+      data: {
+        labels: statuses.map(s => s.label),
+        datasets: [{
+          data: statuses.map(s => s.count),
+          backgroundColor: statuses.map((s) =>
+            statusColors[s.code] || fallbackColors[fallbackIndex++ % fallbackColors.length]
+          ),
+          borderWidth: 3, borderColor: "#fff", hoverOffset: 8,
+        }],
+      },
+      options: {
+        maintainAspectRatio: false,
+        cutout: "64%",
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: "circle", color: "#4a3c36", font: { size: 11, weight: "600" } },
+          },
+        },
+      },
+    });
+  }
+
+  if (document.getElementById("monthChart")) new Chart(document.getElementById("monthChart"), {
+    type: "bar",
+    data: {
+      labels: months.map(m => m.label),
+      datasets: [{
+        label: "{% trans "Revenue" %}",
+        data: months.map(m => m.value),
+        backgroundColor: (ctx) => {
+          const area = ctx.chart.chartArea;
+          if (!area) return PALETTE.wine;
+          const g = ctx.chart.ctx.createLinearGradient(area.left, 0, area.right, 0);
+          g.addColorStop(0, PALETTE.wine);
+          g.addColorStop(.5, PALETTE.wineLight);
+          g.addColorStop(1, PALETTE.sandDeep);
+          return g;
+        },
+        hoverBackgroundColor: PALETTE.wineDark,
+        borderRadius: 8,
+        maxBarThickness: 46,
+      }],
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => money(c.parsed.y) } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: tickColor } },
+        y: { grid: { color: gridColor }, ticks: { color: tickColor, callback: (v) => CURRENCY + v } },
+      },
+    },
+  });
+</script>
+{% endblock %}

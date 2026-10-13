@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% trans "Request Return" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+    <div class="au-section-head">
+      <div>
+        <a class="small text-muted text-decoration-none" href="{% url 'orders:detail' order.order_number %}">
+          <i class="bi bi-arrow-left"></i> {% blocktrans with order_number=order.order_number %}Order {{ order_number }}{% endblocktrans %}
+        </a>
+        <h1 class="h4 mb-1 mt-1">{% trans "Request Return" %}</h1>
+        <p class="text-muted mb-0">{% trans "Select items and reason for your return." %}</p>
+      </div>
+    </div>
+
+    <div class="au-card p-4">
+      <form method="post" id="return-form">
+        {% csrf_token %}
+        
+        <div class="mb-4">
+          <label class="form-label fw-semibold">{% trans "Reason for return" %}</label>
+          <select name="reason" class="form-select" required>
+            <option value="" disabled selected>{% trans "Select a reason" %}</option>
+            {% for code, label in return_reasons %}
+              <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="mb-4">
+          <label class="form-label">{% trans "Additional details (optional)" %}</label>
+          <textarea name="reason_detail" class="form-control" rows="3" 
+                    placeholder="{% trans 'Any additional information...' %}"></textarea>
+        </div>
+        
+        <div class="mb-4">
+          <label class="form-label fw-semibold">{% trans "Items to return" %}</label>
+          {% if eligible_items %}
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th style="width:50px"></th>
+                    <th>{% trans "Product" %}</th>
+                    <th class="text-center">{% trans "Qty Ordered" %}</th>
+                    <th class="text-center">{% trans "Available" %}</th>
+                    <th class="text-center">{% trans "Return Qty" %}</th>
+                    <th class="text-end">{% trans "Refund" %}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for entry in eligible_items %}
+                    <tr data-item-id="{{ entry.item.pk }}" data-max-qty="{{ entry.available_qty }}" data-unit-price="{{ entry.item.unit_price }}">
+                      <td>
+                        <div class="au-thumb" style="width:48px;height:48px">
+                          {% if entry.item.image_url %}<img src="{{ entry.item.image_url }}" alt="" class="w-100 h-100 object-fit-cover">{% endif %}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="fw-semibold text-ink">{{ entry.item.display_name }}</div>
+                        <div class="small text-muted">{% blocktrans with sku=entry.item.product_sku %}SKU: {{ sku }}{% endblocktrans %}</div>
+                      </td>
+                      <td class="text-center">{{ entry.item.quantity }}</td>
+                      <td class="text-center">{{ entry.available_qty }}</td>
+                      <td class="text-center">
+                        <input type="number" name="return_qty_{{ entry.item.pk }}" class="form-control form-control-sm text-center return-qty-input" 
+                               min="0" max="{{ entry.available_qty }}" value="0" data-item-id="{{ entry.item.pk }}">
+                      </td>
+                      <td class="text-end fw-bold return-line-total" data-item-id="{{ entry.item.pk }}">{{ CURRENCY_SYMBOL }}0.00</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center mt-3 p-3 rounded" style="background:#f8f9fa">
+              <span class="fw-semibold">{% trans "Total Refund" %}</span>
+              <span class="fw-bold text-success h5 mb-0" id="return-total">{{ CURRENCY_SYMBOL }}0.00</span>
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-box-seam" style="font-size:48px"></i>
+              <p class="mt-2">{% trans "No items available for return." %}</p>
+            </div>
+          {% endif %}
+        </div>
+        
+        <input type="hidden" name="items_data" id="items-data-input" value="[]">
+        
+        <div class="d-flex gap-2">
+          <a href="{% url 'orders:detail' order.order_number %}" class="btn btn-outline-secondary">{% trans "Back" %}</a>
+          <button type="submit" class="btn btn-primary ms-auto" {% if not eligible_items %}disabled{% endif %}>
+            <i class="bi bi-arrow-return-left"></i> {% trans "Submit Return Request" %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  const form = document.getElementById('return-form');
+  const qtyInputs = form.querySelectorAll('.return-qty-input');
+  const totalEl = document.getElementById('return-total');
+  const hiddenInput = document.getElementById('items-data-input');
+  const symbol = "{{ CURRENCY_SYMBOL|escapejs }}";
+  
+  function formatCurrency(val) {
+    return symbol + val.toFixed(2);
+  }
+  
+  function updateTotals() {
+    let total = 0;
+    const itemsData = [];
+    
+    qtyInputs.forEach(input => {
+      const qty = parseInt(input.value) || 0;
+      const itemId = input.dataset.itemId;
+      const unitPrice = parseFloat(input.dataset.unitPrice) || 0;
+      const maxQty = parseInt(input.dataset.maxQty) || 0;
+      
+      if (qty > 0) {
+        const lineTotal = qty * unitPrice;
+        total += lineTotal;
+        itemsData.push({
+          order_item_id: parseInt(itemId),
+          quantity: qty,
+          reason: form.querySelector('[name="reason"]').value || 'changed_mind',
+          reason_detail: form.querySelector('[name="reason_detail"]').value || '',
+          restock: true
+        });
+      }
+      
+      // Update line total display
+      const lineEl = document.querySelector('.return-line-total[data-item-id="' + itemId + '"]');
+      if (lineEl) lineEl.textContent = formatCurrency(qty * unitPrice);
+    });
+    
+    totalEl.textContent = formatCurrency(total);
+    hiddenInput.value = JSON.stringify(itemsData);
+  }
+  
+  qtyInputs.forEach(input => {
+    input.addEventListener('input', updateTotals);
+    input.addEventListener('change', updateTotals);
+  });
+  
+  // Update totals when reason changes (for items_data)
+  form.querySelector('[name="reason"]').addEventListener('change', updateTotals);
+  form.querySelector('[name="reason_detail"]').addEventListener('input', updateTotals);
+  
+  form.addEventListener('submit', (e) => {
+    const hasItems = Array.from(qtyInputs).some(input => (parseInt(input.value) || 0) > 0);
+    if (!hasItems) {
+      e.preventDefault();
+      alert(t('Please select at least one item to return.'));
+    }
+  });
+})();
+</script>
+{% endblock %}

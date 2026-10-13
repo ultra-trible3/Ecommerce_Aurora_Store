@@ -1,0 +1,22 @@
+{% load i18n %}
+<section class="au-section pb-0">
+  <div class="container-xxl">
+    <div class="au-newsletter d-flex flex-wrap align-items-center justify-content-between gap-4">
+      <div style="max-width:520px">
+        <span class="au-eyebrow"><i class="bi bi-send"></i> {% trans "Newsletter" %}</span>
+        <h3 class="h4 mb-2">{% trans "Get deals before everyone else" %}</h3>
+        <p class="text-muted mb-0" style="font-size:.93rem">
+          {% blocktrans %}Subscribe for early access to drops, restocks and members-only discounts.
+          No spam — unsubscribe anytime.{% endblocktrans %}
+        </p>
+      </div>
+      <form class="d-flex gap-2 flex-grow-1" style="min-width:280px;max-width:440px"
+            method="post" action="{% url 'newsletter:subscribe' %}" id="newsletter-form">
+        {% csrf_token %}
+        <input type="email" name="email" class="form-control" placeholder="you@example.com"
+               aria-label="{% trans 'Email address' %}" required>
+        <button class="btn btn-primary text-nowrap" type="submit">{% trans "Subscribe" %}</button>
+      </form>
+    </div>
+  </div>
+</section>

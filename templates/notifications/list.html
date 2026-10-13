@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Notifications" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+    <div class="row g-4">
+      <div class="col-lg-3">{% include "includes/account_nav.html" with nav="notifications" %}</div>
+      <div class="col-lg-9">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+          <div>
+            <h1 class="h4 mb-1">{% trans "Notifications" %}</h1>
+            <p class="text-muted mb-0">{% trans "Order updates, payments and offers." %}</p>
+          </div>
+          <form method="post" action="{% url 'notifications:mark_all_read' %}">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-secondary" type="submit">{% trans "Mark all read" %}</button>
+          </form>
+        </div>
+
+        <div class="au-card">
+          {% if notifications %}
+            {% for n in notifications %}
+              <{% if n.link %}a href="{{ n.link }}"{% else %}div{% endif %}
+                 class="d-flex gap-3 p-3 border-bottom text-decoration-none {% if not n.is_read %}bg-primary-subtle bg-opacity-25{% endif %}">
+                <span class="au-avatar" style="width:38px;height:38px;font-size:.85rem;background:var(--au-primary-soft);color:var(--au-primary)">
+                  {% if n.type == 'order' %}<i class="bi bi-box-seam"></i>
+                  {% elif n.type == 'payment' %}<i class="bi bi-credit-card"></i>
+                  {% elif n.type == 'promo' %}<i class="bi bi-tags"></i>
+                  {% elif n.type == 'stock' %}<i class="bi bi-exclamation-triangle"></i>
+                  {% else %}<i class="bi bi-bell"></i>{% endif %}
+                </span>
+                <div class="flex-grow-1">
+                  <b class="text-ink">{{ n.title }}</b>
+                  <p class="small text-muted mb-0">{{ n.body }}</p>
+                  <time class="small text-muted-2">{% blocktrans with time=n.created_at|timesince %}{{ time }} ago{% endblocktrans %}</time>
+                </div>
+                {% if not n.is_read %}
+                  <form method="post" action="{% url 'notifications:mark_read' n.pk %}">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-link text-muted" type="submit" title="{% trans 'Mark as read' %}">
+                      <i class="bi bi-check"></i>
+                    </button>
+                  </form>
+                {% endif %}
+              </{% if n.link %}a{% else %}div{% endif %}>
+            {% endfor %}
+          {% else %}
+            {% trans "No notifications" as empty_title %}
+            {% trans "Order updates and offers will appear here." as empty_text %}
+            {% include "includes/empty_state.html" with icon="bi-bell-slash" title=empty_title text=empty_text %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

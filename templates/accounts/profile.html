@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% load static core_tags i18n %}
+
+{% block title %}{% trans "Profile settings" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'vendor/css/cropper.min.css' %}">
+{% endblock %}
+
+{% block content %}
+<section class="au-section pt-4">
+  <div class="container-xxl">
+    <div class="row g-4">
+      <div class="col-lg-3">{% include "includes/account_nav.html" with nav="profile" %}</div>
+
+      <div class="col-lg-9">
+        <form method="post" enctype="multipart/form-data" class="au-settings">
+          {% csrf_token %}
+
+          <!-- Header -->
+          <div class="au-card au-settings-head">
+            <div>
+              <h1 class="h4 mb-1">{% trans "Profile settings" %}</h1>
+              <p class="small text-muted mb-0">
+                {% trans "Your photo and personal details are used on orders, reviews and support requests." %}
+              </p>
+            </div>
+            {% if user.email_verified %}
+              <span class="au-pay paid"><i class="bi bi-patch-check-fill"></i> {% trans "Email verified" %}</span>
+            {% else %}
+              <span class="au-pay"><i class="bi bi-clock"></i> {% trans "Email not verified" %}</span>
+            {% endif %}
+          </div>
+
+          {% if form.non_field_errors %}
+            <div class="au-alert mt-1" style="background:#fef2f2;color:#991b1b;border-color:#fecaca">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <div>{{ form.non_field_errors|first }}</div>
+            </div>
+          {% endif %}
+
+          <!-- Profile photo -->
+          <div class="au-card au-settings-card">
+            <div class="au-settings-title">
+              <h2>{% trans "Profile photo" %}</h2>
+              <p>{% trans "Shown next to your reviews and in support chats." %}</p>
+            </div>
+
+            <div class="au-photo">
+              <span class="au-avatar lg au-photo-avatar">
+                {% if user.profile_image %}
+                  <img src="{{ user.profile_image.url }}" alt="{{ user.get_full_name|default:user.username }}">
+                {% else %}
+                  {{ user.initials }}
+                {% endif %}
+              </span>
+              <div class="au-photo-body">
+                <label class="form-label" for="{{ form.profile_image.id_for_label }}">{% trans "Photo file" %}</label>
+                {{ form.profile_image }}
+                <div class="form-text">
+                  {% trans "JPG or PNG up to 5 MB — pick a photo and crop it to a square." %}
+                </div>
+                <div class="au-crop-state" data-crop-state hidden>
+                  <i class="bi bi-check2-circle"></i>
+                  <span data-crop-state-text></span>
+                  <button type="button" class="au-crop-state-reset" data-crop-reset>{% trans "Remove" %}</button>
+                </div>
+                {% if form.profile_image.errors %}
+                  <div class="invalid-feedback d-block">{{ form.profile_image.errors|first }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Personal information -->
+          <div class="au-card au-settings-card">
+            <div class="au-settings-title">
+              <h2>{% trans "Personal information" %}</h2>
+              <p>{% trans "Keep this current so deliveries, receipts and updates reach you." %}</p>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.first_name.id_for_label }}">{% trans "First name" %}</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                  <div class="invalid-feedback d-block">{{ form.first_name.errors|first }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.last_name.id_for_label }}">{% trans "Last name" %}</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                  <div class="invalid-feedback d-block">{{ form.last_name.errors|first }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.email.id_for_label }}">
+                  {% trans "Email" %} <span class="text-danger">*</span>
+                </label>
+                {{ form.email }}
+                {% if form.email.help_text %}
+                  <div class="form-text">{{ form.email.help_text }}</div>
+                {% endif %}
+                {% if form.email.errors %}
+                  <div class="invalid-feedback d-block">{{ form.email.errors|first }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.phone.id_for_label }}">{% trans "Phone" %}</label>
+                {{ form.phone }}
+                {% if form.phone.help_text %}
+                  <div class="form-text">{{ form.phone.help_text }}</div>
+                {% endif %}
+                {% if form.phone.errors %}
+                  <div class="invalid-feedback d-block">{{ form.phone.errors|first }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="{{ form.date_of_birth.id_for_label }}">{% trans "Date of birth" %}</label>
+                {{ form.date_of_birth }}
+                {% if form.date_of_birth.help_text %}
+                  <div class="form-text">{{ form.date_of_birth.help_text }}</div>
+                {% endif %}
+                {% if form.date_of_birth.errors %}
+                  <div class="invalid-feedback d-block">{{ form.date_of_birth.errors|first }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Account -->
+          <div class="au-card au-settings-card">
+            <div class="au-settings-title">
+              <h2>{% trans "Account" %}</h2>
+              <p>{% trans "Sign-in details — these are managed automatically." %}</p>
+            </div>
+
+            <dl class="au-deflist">
+              <div>
+                <dt>{% trans "Username" %}</dt>
+                <dd>{{ user.username }}</dd>
+              </div>
+              <div>
+                <dt>{% trans "Sign-in email" %}</dt>
+                <dd>{{ user.email }}</dd>
+              </div>
+              <div>
+                <dt>{% trans "Member since" %}</dt>
+                <dd>{{ user.date_joined|date:"F j, Y" }}</dd>
+              </div>
+              <div>
+                <dt>{% trans "Password" %}</dt>
+                <dd class="au-deflist-action">
+                  <span aria-hidden="true">••••••••</span>
+                  <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:change_password' %}">
+                    <i class="bi bi-shield-lock"></i> {% trans "Change password" %}
+                  </a>
+                </dd>
+              </div>
+            </dl>
+          </div>
+
+          <!-- Actions -->
+          <div class="au-card au-settings-foot">
+            <a class="btn btn-outline-secondary" href="{% url 'accounts:dashboard' %}">{% trans "Cancel" %}</a>
+            <button class="btn btn-primary" type="submit">
+              <i class="bi bi-check2"></i> {% trans "Save changes" %}
+            </button>
+          </div>
+        </form>
+
+        <!-- Avatar crop modal -->
+        <div class="au-crop" id="au-crop" hidden>
+          <div class="au-crop-backdrop" data-crop-dismiss></div>
+          <div class="au-crop-card" role="dialog" aria-modal="true"
+               aria-labelledby="au-crop-title" aria-describedby="au-crop-help">
+            <div class="au-crop-head">
+              <div>
+                <h2 id="au-crop-title">{% trans "Crop your photo" %}</h2>
+                <p id="au-crop-help">{% trans "Drag to reposition, use the slider to zoom." %}</p>
+              </div>
+              <button type="button" class="au-crop-x" data-crop-dismiss aria-label="{% trans 'Close' %}">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+
+            <div class="au-crop-stage">
+              <img id="au-crop-img" alt="{% trans 'Photo to crop' %}">
+            </div>
+
+            <div class="au-crop-tools">
+              <button type="button" class="btn btn-icon" id="au-crop-rot-l" aria-label="{% trans 'Rotate left' %}">
+                <i class="bi bi-arrow-counterclockwise"></i>
+              </button>
+              <i class="bi bi-zoom-out" aria-hidden="true"></i>
+              <input type="range" id="au-crop-zoom" min="0" max="100" value="40"
+                     aria-label="{% trans 'Zoom' %}">
+              <i class="bi bi-zoom-in" aria-hidden="true"></i>
+              <button type="button" class="btn btn-icon" id="au-crop-rot-r" aria-label="{% trans 'Rotate right' %}">
+                <i class="bi bi-arrow-clockwise"></i>
+              </button>
+            </div>
+
+            <div class="au-crop-actions">
+              <button type="button" class="au-crop-btn au-crop-cancel" data-crop-dismiss>
+                {% trans "Cancel" %}
+              </button>
+              <button type="button" class="au-crop-btn au-crop-ok" id="au-crop-apply">
+                <i class="bi bi-crop"></i> {% trans "Apply crop" %}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'vendor/js/cropper.min.js' %}"></script>
+  <script src="{% static_v 'js/avatar-crop.js' %}" defer></script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% if mode == 'create' %}{% trans "New category" %}{% else %}{% trans "Edit category" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% if mode == 'create' %}{% trans "New category" %}{% else %}{% blocktrans with name=category.name %}Edit “{{ name }}”{% endblocktrans %}{% endif %}</h1>
+    <p class="mg-sub mb-0">{% trans "Categories can be nested to build a hierarchy." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:categories' %}"><i class="bi bi-arrow-left"></i> {% trans "Back" %}</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="mg-card" style="max-width:760px">
+  {% csrf_token %}
+  <div class="mg-card-body">
+    {% for field in form %}
+      {% if field.name == "is_active" or field.name == "is_featured" %}
+        <div class="form-check mb-2">
+          {{ field }}
+          <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        </div>
+      {% elif field.name == "description" %}
+        <div class="mg-field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+        </div>
+      {% else %}
+        <div class="mg-field">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {{ field.errors }}
+          {% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="d-flex gap-2 p-3 border-top">
+    <button class="mg-btn mg-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {% trans "Save" %}</button>
+    <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:categories' %}">{% trans "Cancel" %}</a>
+  </div>
+</form>
+{% endblock %}

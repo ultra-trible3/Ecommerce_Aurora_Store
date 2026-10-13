@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{{ brand.name }} | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ meta_description|default:brand.description|truncatechars:160 }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="container-xxl">{% include "includes/breadcrumbs.html" %}</div>
+{% endblock %}
+
+{% block content %}
+<section class="au-section pt-2">
+  <div class="container-xxl">
+    <div class="au-card p-4 p-md-5 mb-4 d-flex flex-wrap align-items-center gap-4" style="background:#f5efe1">
+      {% if brand.logo %}
+        <img src="{{ brand.logo.url }}" alt="{{ brand.name }}"
+             style="width:84px;height:84px;object-fit:contain;background:#fff;padding:8px;border-radius:16px">
+      {% endif %}
+      <div style="flex:1;min-width:260px">
+        <span class="au-eyebrow"><i class="bi bi-award"></i> {% trans "Brand" %}</span>
+        <h1 class="h3 mb-1">{{ brand.name }}</h1>
+        {% if brand.description %}<p class="text-muted mb-0">{{ brand.description }}</p>{% endif %}
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-3">{% include "includes/shop_filters.html" %}</div>
+      <div class="col-lg-9">
+        {% include "includes/shop_toolbar.html" %}
+        {% if products %}
+          <div class="row g-3 g-md-4 mt-2">
+            {% for product in products %}
+              <div class="col-6 col-md-4">
+                {% include "includes/product_card.html" with product=product %}
+              </div>
+            {% endfor %}
+          </div>
+          <div class="mt-4">{% include "includes/pagination.html" with page_obj=page_obj %}</div>
+        {% else %}
+          {% trans "Nothing here yet" as empty_title %}
+          {% trans "No active products for this brand right now." as empty_text %}
+          {% trans "Browse all products" as empty_action %}
+          {% include "includes/empty_state.html" with icon="bi-award" title=empty_title text=empty_text action_url="/shop/" action_label=empty_action %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

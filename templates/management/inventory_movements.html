@@ -1,0 +1,109 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Stock movements" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Stock movements" %}</h1>
+    <p class="mg-sub mb-0">{% trans "Complete audit trail of all inventory changes." %}</p>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:inventory' %}">{% trans "Back to inventory" %}</a>
+</div>
+
+<form class="mg-filterbar mg-filterbar-inline mb-4" method="get" id="movements-filter">
+  <div class="mg-search-inline">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% trans "Search product or SKU…" %}">
+  </div>
+
+  <select name="type" onchange="this.form.submit()">
+    <option value="">{% trans "All types" %}</option>
+    {% for value, label in types %}
+    <option value="{{ value }}" {% if txn_type == value %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+
+  <select name="product" onchange="this.form.submit()">
+    <option value="">{% trans "All products" %}</option>
+    {% for p in products %}
+    <option value="{{ p.pk }}" {% if product_id == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.name }} ({{ p.sku }})</option>
+    {% endfor %}
+  </select>
+
+  <input type="date" name="date_from" value="{{ date_from }}" class="form-control" placeholder="{% trans "From" %}">
+  <input type="date" name="date_to" value="{{ date_to }}" class="form-control" placeholder="{% trans "To" %}">
+
+  <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Filter" %}</button>
+  <a class="mg-btn mg-btn-primary" href="?export=csv{% if q %}&q={{ q }}{% endif %}{% if txn_type %}&type={{ txn_type }}{% endif %}{% if product_id %}&product={{ product_id }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{% trans "Export CSV" %}</a>
+</form>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr>
+          <th>{% trans "Date" %}</th>
+          <th>{% trans "Product" %}</th>
+          <th>{% trans "Variant" %}</th>
+          <th>{% trans "Type" %}</th>
+          <th class="text-end">{% trans "Qty" %}</th>
+          <th class="text-end">{% trans "Stock after" %}</th>
+          <th>{% trans "Reference" %}</th>
+          <th>{% trans "Note" %}</th>
+          <th>{% trans "By" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in movements %}
+        <tr>
+          <td class="small">{{ m.created_at|date:"M j, Y g:i A" }}</td>
+          <td>
+            <a href="{% url 'dashboard:product_detail' m.product.pk %}">{{ m.product.name }}</a>
+            <br><small class="text-muted">{{ m.product.sku }}</small>
+          </td>
+          <td>
+            {% if m.variant %}
+            {{ m.variant.name }}
+            {% else %}
+            <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="mg-chip {% if m.transaction_type == 'sale' %}rejected{% elif m.transaction_type == 'purchase' %}approved{% elif m.transaction_type == 'cancellation' %}warning{% else %}pending{% endif %}">
+              {{ m.get_transaction_type_display }}
+            </span>
+          </td>
+          <td class="text-end fw-bold {% if m.quantity < 0 %}text-danger{% else %}text-success{% endif %}">
+            {% if m.quantity > 0 %}+{% endif %}{{ m.quantity }}
+          </td>
+          <td class="text-end fw-bold">{{ m.stock_after }}</td>
+          <td class="small text-muted">
+            {% if m.reference %}
+            <a href="{% url 'dashboard:order_detail' m.reference %}">{{ m.reference }}</a>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+          <td class="small text-muted">{{ m.note|default:"—" }}</td>
+          <td class="small">
+            {% if m.created_by %}
+            {{ m.created_by.get_full_name|default:m.created_by.email }}
+            {% else %}
+            <span class="text-muted">{% trans "System" %}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9"><div class="mg-empty py-4"><i class="bi bi-arrow-left-right"></i>{% trans "No movements found." %}</div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "management/_pagination.html" with page_obj=page_obj q=q extra_params="&type="|add:txn_type|add:"&product="|add:product_id|add:"&date_from="|add:date_from|add:"&date_to="|add:date_to %}
+</div>
+{% endblock %}

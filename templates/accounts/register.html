@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Create account" %} | {{ SITE_NAME }}{% endblock %}
+
+{# Popup is re-armed when the visitor submits this form — see extra_js #}
+{% block deal_popup %}{% endblock %}
+
+{% block content %}
+<section class="au-section">
+  <div class="container-xxl">
+    <div class="row g-4 justify-content-center">
+      <div class="col-lg-6 col-md-8">
+        <div class="au-form-card">
+          <span class="au-eyebrow"><i class="bi bi-star"></i> {% blocktrans %}Join {{ SITE_NAME }}{% endblocktrans %}</span>
+          <h1 class="h4 mb-1">{% trans "Create your account" %}</h1>
+          <p class="text-muted small mb-4">{% trans "It takes less than a minute — no spam, ever." %}</p>
+
+          <form method="post" action="{% url 'accounts:register' %}">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="au-alert mb-3" style="background:#fef2f2;color:#991b1b;border-color:#fecaca">
+                <i class="bi bi-exclamation-circle-fill"></i>
+                <div>{{ form.non_field_errors|first }}</div>
+              </div>
+            {% endif %}
+
+            <div class="row g-3">
+              {% for field in form %}
+                {% if field.name == 'accept_terms' %}
+                  <div class="col-12">
+                    <div class="form-check">
+                      {{ field }}
+                      <label class="form-check-label small" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                      </label>
+                    </div>
+                    {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors|first }}</div>{% endif %}
+                  </div>
+                {% elif field.name == 'first_name' or field.name == 'last_name' or field.name == 'phone' %}
+                  <div class="{% if field.name == 'phone' %}col-12{% else %}col-md-6{% endif %}">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if not field.required %} <span class="text-muted">{% trans "(optional)" %}</span>{% endif %}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors|first }}</div>{% endif %}
+                  </div>
+                {% else %}
+                  <div class="col-12">
+                    <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors|first }}</div>{% endif %}
+                    {% if field.name == 'password1' %}
+                      <div class="form-text">{% trans "Minimum 8 characters, not too common." %}</div>
+                    {% endif %}
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+
+            <button class="btn btn-primary w-100 btn-lg mt-4" type="submit">{% trans "Create account" %}</button>
+          </form>
+
+          <p class="text-center small text-muted mt-4 mb-0">
+            {% trans "Already registered?" %} <a href="{% url 'accounts:login' %}">{% trans "Sign in" %}</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var form = document.querySelector('form[action*="register"]');
+  if (!form) return;
+  /* Re-arm the deal popup so it greets the new member after signing up */
+  form.addEventListener("submit", function () {
+    try {
+      Object.keys(sessionStorage).forEach(function (key) {
+        if (key.indexOf("deal_popup_seen_") === 0) sessionStorage.removeItem(key);
+      });
+    } catch (e) {}
+  });
+})();
+</script>
+{% endblock %}

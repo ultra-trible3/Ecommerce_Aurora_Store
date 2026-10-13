@@ -1,0 +1,48 @@
+{% load i18n %}{% get_current_language as LANGUAGE_CODE %}<!doctype html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ SITE_NAME }}{% endblock %}</title>
+  <style>
+    body { margin:0; background:#f5efe1; font-family:Arial,Helvetica,sans-serif; color:#33141b; }
+    .wrap { max-width:600px; margin:0 auto; background:#ffffff; }
+    .pad { padding:32px; }
+    .brand { background:#790d16; color:#f5efe1; padding:20px 32px; font-size:20px; font-weight:bold; letter-spacing:.02em; }
+    .brand small { display:block; font-size:12px; font-weight:normal; opacity:.85; letter-spacing:0; }
+    h1 { font-size:20px; margin:0 0 8px; }
+    p { line-height:1.6; color:#4a3c36; margin:0 0 14px; font-size:14px; }
+    .btn { display:inline-block; background:#790d16; color:#ffffff; text-decoration:none;
+      padding:12px 22px; border-radius:8px; font-weight:bold; font-size:14px; }
+    table.items { width:100%; border-collapse:collapse; margin:8px 0 16px; }
+    table.items th { text-align:left; font-size:12px; text-transform:uppercase; letter-spacing:.06em;
+      color:#7a6a62; border-bottom:2px solid #aec4d4; padding:8px 0; }
+    table.items td { font-size:14px; padding:10px 0; border-bottom:1px solid #e7ddcb; color:#33141b; }
+    table.items td.r, table.items th.r { text-align:right; }
+    .totals { width:100%; border-collapse:collapse; }
+    .totals td { font-size:14px; padding:5px 0; color:#4a3c36; }
+    .totals td.r { text-align:right; }
+    .totals tr.grand td { font-weight:bold; font-size:16px; color:#33141b; border-top:2px solid #aec4d4; padding-top:10px; }
+    .muted { color:#7a6a62; font-size:13px; }
+    .footer { background:#790d16; color:#e5d3af; padding:20px 32px; font-size:12px; line-height:1.7; }
+    .footer a { color:#f5efe1; }
+    .notice { background:#f5efe1; border-left:4px solid #790d16; padding:12px 16px;
+      font-size:13px; color:#4a3c36; margin:0 0 18px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand">
+      {{ SITE_NAME }}
+      <small>{{ SITE_TAGLINE }}</small>
+    </div>
+    <div class="pad">
+      {% block content %}{% endblock %}
+    </div>
+    <div class="footer">
+      {% blocktrans with email=SUPPORT_EMAIL phone=SUPPORT_PHONE %}Need help? Email {{ email }} or call {{ phone }}.{% endblocktrans %}<br>
+      {% blocktrans with site=SITE_NAME %}{{ site }} · This is a transactional email relating to your account or order.{% endblocktrans %}
+    </div>
+  </div>
+</body>
+</html>

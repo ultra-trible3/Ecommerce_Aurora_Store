@@ -1,0 +1,98 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Returns" %} | {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:orders' %}"><i class="bi bi-arrow-left"></i> {% trans "Orders" %}</a>
+    <h1 class="mg-title mt-1">{% trans "Returns" %}</h1>
+    <p class="mg-sub mb-0">{% trans "Manage customer return requests" %}</p>
+  </div>
+  <a class="mg-btn mg-btn-primary" href="{% url 'dashboard:returns_export' %}?{{ request.GET.urlencode }}">
+    <i class="bi bi-download"></i> {% trans "Export CSV" %}
+  </a>
+</div>
+
+<div class="mg-card mb-4">
+  <div class="mg-card-body">
+    <form method="get" class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small">{% trans "Search" %}</label>
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="{% trans "Order #, email, return ID" %}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">{% trans "Status" %}</label>
+        <select name="status" class="form-select">
+          <option value="">{% trans "All statuses" %}</option>
+          {% for code, label in status_choices %}
+            <option value="{{ code }}" {% if code == status_filter %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="mg-btn mg-btn-primary w-100" type="submit"><i class="bi bi-search"></i> {% trans "Filter" %}</button>
+      </div>
+      <div class="col-md-3">
+        {% if q or status_filter %}
+          <a href="{% url 'dashboard:returns' %}" class="mg-btn mg-btn-ghost w-100">{% trans "Clear" %}</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr>
+          <th>{% trans "ID" %}</th>
+          <th>{% trans "Order" %}</th>
+          <th>{% trans "Customer" %}</th>
+          <th>{% trans "Date" %}</th>
+          <th>{% trans "Status" %}</th>
+          <th>{% trans "Reason" %}</th>
+          <th class="text-end">{% trans "Items" %}</th>
+          <th class="text-end">{% trans "Refund" %}</th>
+          <th>{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ret in returns %}
+          <tr>
+            <td><a href="{% url 'dashboard:return_detail' ret.pk %}">#{{ ret.pk }}</a></td>
+            <td>
+              <a href="{% url 'dashboard:order_detail' ret.order.order_number %}">{{ ret.order.order_number }}</a>
+            </td>
+            <td>
+              <a href="{% url 'dashboard:customer_detail' ret.user.pk %}">{{ ret.user.get_full_name|default:ret.user.email }}</a>
+              <br><small class="text-muted">{{ ret.user.email }}</small>
+            </td>
+            <td>{{ ret.created_at|date:"M j, Y" }}</td>
+            <td><span class="mg-chip {{ ret.status }}">{{ ret.get_status_display }}</span></td>
+            <td>{{ ret.get_reason_display }}</td>
+            <td class="text-end">{{ ret.items.count }}</td>
+            <td class="text-end fw-bold">{{ ret.refund_amount|currency }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:return_detail' ret.pk %}" title="{% trans "View" %}"><i class="bi bi-eye"></i></a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" class="text-center text-muted py-4">{% trans "No return requests found." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if page_obj.has_other_pages %}
+    <div class="mg-card-foot">
+      {% include "management/_pagination.html" %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

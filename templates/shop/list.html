@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{% trans "Shop" %}{% if meta_title %} — {{ meta_title }}{% endif %} | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{% trans "Browse the full catalogue — filter by brand, price, rating and more." as default_shop_desc %}{{ meta_description|default:default_shop_desc }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="container-xxl">{% include "includes/breadcrumbs.html" %}</div>
+{% endblock %}
+
+{% block content %}
+<section class="au-section pt-2">
+  <div class="container-xxl">
+    <div class="row g-4">
+      <div class="col-lg-3">
+        {% include "includes/shop_filters.html" %}
+      </div>
+
+      <div class="col-lg-9">
+        {% include "includes/shop_toolbar.html" %}
+
+        {% if products %}
+          <div class="row g-3 g-md-4 mt-2">
+            {% for product in products %}
+              <div class="col-6 col-md-4">
+                {% include "includes/product_card.html" with product=product %}
+              </div>
+            {% endfor %}
+          </div>
+          <div class="mt-4">
+            {% include "includes/pagination.html" with page_obj=page_obj qs=querystring_value %}
+          </div>
+        {% else %}
+          {% trans "No products found" as empty_title %}
+          {% trans "Try removing some filters or searching for something else." as empty_text %}
+          {% trans "Browse all products" as empty_action %}
+          {% include "includes/empty_state.html" with icon="bi-search" title=empty_title text=empty_text action_url="/shop/" action_label=empty_action %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

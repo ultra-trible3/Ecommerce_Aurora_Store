@@ -1,0 +1,76 @@
+{% load core_tags i18n %}
+<article class="au-product">
+  <div class="flags">
+    {% if not product.is_in_stock %}
+      <span class="au-flag out">{% trans "Sold out" %}</span>
+    {% elif product.is_on_sale %}
+      <span class="au-flag sale">-{{ product.discount_percent }}%</span>
+    {% endif %}
+    {% if product.is_new_arrival %}<span class="au-flag new">{% trans "New" %}</span>{% endif %}
+    {% if product.is_best_seller %}<span class="au-flag best">{% trans "Best seller" %}</span>{% endif %}
+  </div>
+
+  <div class="quick">
+    <button class="btn-icon wishlist-toggle" type="button"
+            data-product="{{ product.slug }}"
+            title="{% trans 'Add to wishlist' %}" aria-label="{% trans 'Add to wishlist' %}">
+      <i class="bi bi-heart"></i>
+    </button>
+    <button class="btn-icon compare-toggle {% if product.slug in compare_slugs %}is-active{% endif %}" type="button"
+            data-product="{{ product.slug }}"
+            title="{% trans 'Add to compare' %}" aria-label="{% trans 'Add to compare' %}">
+      <i class="bi {% if product.slug in compare_slugs %}bi-columns-fill{% else %}bi-columns{% endif %}"></i>
+    </button>
+    <form method="post" action="{% url 'cart:add' %}" class="d-inline" data-ajax-post>
+      {% csrf_token %}
+      <input type="hidden" name="product" value="{{ product.pk }}">
+      <input type="hidden" name="quantity" value="1">
+      <button class="btn-icon" type="submit" title="{% trans 'Add to cart' %}" aria-label="{% trans 'Add to cart' %}"
+              {% if not product.is_in_stock %}disabled{% endif %}>
+        <i class="bi bi-bag-plus"></i>
+      </button>
+    </form>
+  </div>
+
+  <a class="thumb" href="{{ product.get_absolute_url }}">
+    {% if product.main_image %}
+      <img src="{{ product.main_image.url }}" alt="{{ product.name }}" loading="lazy">
+    {% else %}
+      <span class="no-image"><i class="bi bi-image"></i></span>
+    {% endif %}
+  </a>
+
+  <div class="body">
+    <span class="brand">{{ product.brand.name|default:product.category.name }}</span>
+    <h3 class="title h6 mb-0"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+    {% if product.rating_count %}
+      <div class="rating">
+        {% include "includes/stars.html" with rating=product.rating_average %}
+        <span>({{ product.rating_count }})</span>
+      </div>
+    {% endif %}
+    <div class="price">
+      {% if product.is_on_sale %}
+        <span class="now sale">{{ product.sale_price|currency }}</span>
+        <span class="was">{{ product.price|currency }}</span>
+      {% else %}
+        <span class="now">{{ product.price|currency }}</span>
+      {% endif %}
+    </div>
+    <div class="add-bar">
+      {% if product.is_in_stock %}
+        <form method="post" action="{% url 'cart:add' %}" data-ajax-post>
+          {% csrf_token %}
+          <input type="hidden" name="product" value="{{ product.pk }}">
+          <input type="hidden" name="quantity" value="1">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="btn btn-sm btn-soft w-100" type="submit">
+            <i class="bi bi-bag-plus"></i> {% trans "Add to cart" %}
+          </button>
+        </form>
+      {% else %}
+        <button class="btn btn-sm btn-outline-secondary w-100" disabled>{% trans "Sold out" %}</button>
+      {% endif %}
+    </div>
+  </div>
+</article>

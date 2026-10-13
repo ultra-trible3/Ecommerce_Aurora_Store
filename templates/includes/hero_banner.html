@@ -1,0 +1,145 @@
+{% load i18n %}
+{% load core_tags %}
+
+{% if banner %}
+<section class="au-hero-banner {% if banner.overlay_gradient %}has-overlay{% endif %} {{ banner.custom_css|safe }}" 
+         data-banner-id="{{ banner.id }}"
+         data-show-once-per-session="{{ banner.show_once_per_session|yesno:'true,false' }}"
+         data-impression-url="{% url 'banners:track_impression' banner.id %}"
+         data-click-url="{% url 'banners:track_click' banner.id %}"
+         data-seen-url="{% url 'banners:mark_seen' banner.id %}"
+         style="position:relative;width:100%;overflow:hidden;margin:0;padding:0;">
+  
+  <!-- Close button at top right -->
+  <button type="button" 
+          class="banner-close-btn"
+          aria-label="{% trans 'Close banner' %}"
+          data-banner-id="{{ banner.id }}"
+          style="position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s;">
+    <i class="bi bi-x-lg" style="font-size:1.25rem;"></i>
+  </button>
+
+  {% if banner.mobile_image and not preview %}
+  <picture>
+    <source media="(max-width: 767px)" srcset="{{ banner.mobile_image.url }}">
+    <img src="{{ banner.image.url }}" alt="{{ banner.title }}" class="banner-bg" loading="eager" fetchpriority="high">
+  </picture>
+  {% else %}
+  <img src="{{ banner.image.url }}" alt="{{ banner.title }}" class="banner-bg" loading="eager" fetchpriority="high">
+  {% endif %}
+
+  {% if banner.overlay_gradient %}
+  <div class="banner-overlay"></div>
+  {% endif %}
+
+  <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:{{ banner.text_alignment|default:'center' }};padding:2rem;z-index:1;">
+    <div class="container-xxl" style="width:100%;max-width:100%;">
+      <div class="row justify-content-{{ banner.text_alignment|default:'center' }}">
+        <div class="col-lg-10 col-xl-8">
+          {% if banner.button_text and banner.click_action == 'link' %}
+          <a href="{{ banner.link_url }}" class="d-inline-flex flex-column align-items-{{ banner.text_alignment|default:'center' }} gap-2 banner-link" data-banner-id="{{ banner.id }}" data-banner-action="link" style="text-decoration:none;color:inherit;">
+          {% elif banner.button_text %}
+          <button type="button" class="btn banner-link w-100 text-start" data-bs-toggle="modal" data-bs-target="#bannerModal{{ banner.id }}" data-banner-id="{{ banner.id }}" data-banner-action="modal" style="text-align:{{ banner.text_alignment|default:'center' }};">
+          {% else %}
+          <div class="banner-link" style="text-align:{{ banner.text_alignment|default:'center' }};">
+          {% endif %}
+
+          {% if banner.button_text %}
+            <span class="au-eyebrow mb-2" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3);font-size:0.85rem;">{{ banner.title }}</span>
+            <span class="btn-text fw-semibold" style="font-size:clamp(1.5rem,4vw,2.5rem);">{{ banner.button_text }} <i class="bi bi-arrow-right"></i></span>
+          {% else %}
+            <h1 class="banner-title mb-3" style="font-size:clamp(2rem,5vw,3.5rem);font-weight:800;line-height:1.1;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.3)">{{ banner.title }}</h1>
+          {% endif %}
+
+          {% if banner.button_text and banner.click_action == 'link' %}
+          </a>
+          {% elif banner.button_text %}
+          </button>
+          {% else %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal for click_action=modal -->
+{% if banner.click_action == 'modal' and banner.modal_content %}
+<div class="modal fade banner-modal" id="bannerModal{{ banner.id }}" tabindex="-1" aria-labelledby="bannerModalLabel{{ banner.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-fullscreen-md-down modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius:24px;overflow:hidden;">
+      <div class="modal-header border-0 p-4" style="background:rgba(0,0,0,0.6);">
+        <h5 class="modal-title text-white" id="bannerModalLabel{{ banner.id }}">{{ banner.title }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body p-0">
+        <div class="banner-modal-content" style="padding:3rem;max-height:70vh;overflow:auto;color:#fff;">
+          {{ banner.modal_content|safe }}
+        </div>
+      </div>
+      <div class="modal-footer border-0 p-4" style="background:rgba(0,0,0,0.5);">
+        {% if banner.button_text %}
+        <button type="button" class="mg-btn mg-btn-ghost" data-bs-dismiss="modal">{% trans "Close" %}</button>
+        {% if banner.link_url %}
+        <a href="{{ banner.link_url }}" class="mg-btn mg-btn-primary" data-banner-id="{{ banner.id }}" data-banner-action="modal_link">
+          {{ banner.button_text }} <i class="bi bi-arrow-right"></i>
+        </a>
+        {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% elif preview %}
+<!-- Preview placeholder -->
+<section class="au-hero-banner" style="min-height:300px;background:linear-gradient(135deg,var(--au-primary),var(--au-primary-hover));display:flex;align-items:center;justify-content:center;color:#fff;text-align:center;width:100%;">
+  <button type="button" class="banner-close-btn" style="position:absolute;top:16px;right:16px;z-index:10;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,0.5);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+    <i class="bi bi-x-lg" style="font-size:1.25rem;"></i>
+  </button>
+  <div class="container">
+    <span class="au-eyebrow" style="background:rgba(255,255,255,0.2);">{% trans "Preview Mode" %}</span>
+    <h1 class="mt-3" style="font-size:clamp(2rem,5vw,3.5rem)">{% trans "Banner Preview" %}</h1>
+    <p class="lead mt-3">{% trans "This is how your banner will appear on the storefront." %}</p>
+  </div>
+</section>
+{% endif %}
+<!-- Banner close tracking script -->
+<script>
+(function() {
+  // Track banner close (for show_once_per_session)
+  document.addEventListener('click', function(e) {
+    const closeBtn = e.target.closest('.banner-close-btn');
+    if (!closeBtn) return;
+    
+    const bannerId = closeBtn.dataset.bannerId;
+    if (!bannerId) return;
+    
+    const bannerEl = document.querySelector('.au-hero-banner[data-banner-id="' + bannerId + '"]');
+    if (bannerEl) {
+      // Animate out
+      bannerEl.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+      bannerEl.style.opacity = '0';
+      bannerEl.style.transform = 'translateY(-20px)';
+      
+      setTimeout(function() {
+        bannerEl.remove();
+        // Mark as seen in session (URL provided via data-seen-url)
+        var seenUrl = bannerEl.dataset.seenUrl;
+        if (seenUrl) {
+          fetch(seenUrl, {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': window.CSRF_TOKEN || '',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+          }).catch(function() {});
+        }
+      }, 300);
+    }
+  });
+})();
+</script>

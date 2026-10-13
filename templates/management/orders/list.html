@@ -1,0 +1,97 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{% trans "Orders" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <h1 class="mg-title">{% trans "Orders" %}</h1>
+    <p class="mg-sub mb-0">{% blocktrans count counter=page_obj.paginator.count %}{{ counter }} order{% plural %}{{ counter }} orders{% endblocktrans %} · {% blocktrans with active=active_count %}{{ active }} in the fulfilment pipeline{% endblocktrans %}.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="mg-btn mg-btn-secondary" href="{% url 'dashboard:orders_export' %}?{{ request.GET.urlencode }}">
+      <i class="bi bi-file-earmark-arrow-down"></i> {% trans "Export Orders" %}
+    </a>
+    <a class="mg-btn mg-btn-secondary" href="{% url 'dashboard:order_items_export' %}?{{ request.GET.urlencode }}">
+      <i class="bi bi-table"></i> {% trans "Export Items" %}
+    </a>
+  </div>
+</div>
+
+<div class="d-flex gap-2 flex-wrap mb-3">
+  <a href="{% url 'dashboard:orders' %}" class="mg-chip {% if not status_filter %}pending{% else %}neutral{% endif %}">{% trans "All" %}</a>
+  <a href="?status=active" class="mg-chip {% if status_filter == 'active' %}pending{% else %}neutral{% endif %}">{% trans "Active" %}</a>
+  <a href="?status=pending" class="mg-chip {% if status_filter == 'pending' %}pending{% else %}neutral{% endif %}">{% trans "Pending" %}</a>
+  <a href="?status=confirmed" class="mg-chip {% if status_filter == 'confirmed' %}pending{% else %}neutral{% endif %}">{% trans "Confirmed" %}</a>
+  <a href="?status=processing" class="mg-chip {% if status_filter == 'processing' %}pending{% else %}neutral{% endif %}">{% trans "Processing" %}</a>
+  <a href="?status=shipped" class="mg-chip {% if status_filter == 'shipped' %}shipped{% else %}neutral{% endif %}">{% trans "Shipped" %}</a>
+  <a href="?status=delivered" class="mg-chip {% if status_filter == 'delivered' %}delivered{% else %}neutral{% endif %}">{% trans "Delivered" %}</a>
+  <a href="?status=cancelled" class="mg-chip {% if status_filter == 'cancelled' %}cancelled{% else %}neutral{% endif %}">{% trans "Cancelled" %}</a>
+  <a href="?status=unpaid" class="mg-chip {% if status_filter == 'unpaid' %}cancelled{% else %}neutral{% endif %}">{% trans "Unpaid" %}</a>
+</div>
+
+<form class="mg-filterbar" method="get">
+  <div class="mg-search-inline">
+    <i class="bi bi-search"></i>
+    <input type="search" name="q" value="{{ q }}" placeholder="{% trans "Order number, customer or email…" %}">
+  </div>
+  <select name="payment" onchange="this.form.submit()">
+    <option value="">{% trans "Any payment status" %}</option>
+    {% for code in payment_choices %}
+      <option value="{{ code }}" {% if payment_filter == code %}selected{% endif %}>{{ code|title }}</option>
+    {% endfor %}
+  </select>
+  {% if status_filter %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+  <button class="mg-btn mg-btn-ghost" type="submit">{% trans "Filter" %}</button>
+</form>
+
+<div class="mg-card">
+  <div class="table-responsive">
+    <table class="mg-table">
+      <thead>
+        <tr><th>{% trans "Order" %}</th><th>{% trans "Customer" %}</th><th>{% trans "Items" %}</th><th>{% trans "Status" %}</th><th>{% trans "Payment" %}</th><th class="text-end">{% trans "Total" %}</th><th>{% trans "Placed" %}</th><th class="text-end">{% trans "Actions" %}</th></tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+          <tr>
+            <td><a href="{% url 'dashboard:order_detail' order.order_number %}">{{ order.order_number }}</a></td>
+            <td>
+              {{ order.customer_name }}<br>
+              <span class="text-muted" style="font-size:12.5px">{{ order.email }}</span>
+            </td>
+            <td>{{ order.items.count }}</td>
+            <td><span class="mg-chip {{ order.status }}">{{ order.get_status_display }}</span></td>
+            <td><span class="mg-chip {% if order.is_paid %}paid{% else %}neutral{% endif %}">{{ order.get_payment_status_display }}</span></td>
+            <td class="text-end fw-bold">{{ order.total|currency }}</td>
+            <td class="text-muted">{{ order.created_at|date:"M j, g:i A" }}</td>
+            <td class="text-end text-nowrap">
+              {% if perms.orders.change_order %}
+                <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:order_edit' order.order_number %}" title="{% trans 'Edit' %}">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              {% endif %}
+              {% if perms.orders.delete_order %}
+                <form method="post" action="{% url 'dashboard:order_delete' order.order_number %}" class="d-inline"
+                      data-confirm="{% blocktrans with number=order.order_number %}Permanently delete order {{ number }}? This cannot be undone.{% endblocktrans %}">
+                  {% csrf_token %}
+                  <button class="mg-btn mg-btn-ghost text-danger" type="submit" title="{% trans 'Delete' %}">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8">
+            <div class="mg-empty"><i class="bi bi-receipt"></i>{% trans "No orders match this filter." %}</div>
+          </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% include "management/_pagination.html" with page_obj=page_obj q=q status_filter=status_filter %}
+{% endblock %}

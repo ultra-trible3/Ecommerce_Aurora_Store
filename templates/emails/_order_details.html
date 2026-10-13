@@ -1,0 +1,30 @@
+{% load i18n %}
+<table class="items">
+  <thead>
+    <tr><th>{% trans "Item" %}</th><th class="r">{% trans "Qty" %}</th><th class="r">{% trans "Price" %}</th><th class="r">{% trans "Total" %}</th></tr>
+  </thead>
+  <tbody>
+    {% for item in items %}
+      <tr>
+        <td>{{ item.display_name }}{% if item.product_sku %}<br><span class="muted">{% blocktrans with sku=item.product_sku %}SKU {{ sku }}{% endblocktrans %}</span>{% endif %}</td>
+        <td class="r">{{ item.quantity }}</td>
+        <td class="r">{{ CURRENCY_SYMBOL }}{{ item.unit_price }}</td>
+        <td class="r">{{ CURRENCY_SYMBOL }}{{ item.line_total }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<table class="totals">
+  <tr><td>{% trans "Subtotal" %}</td><td class="r">{{ CURRENCY_SYMBOL }}{{ order.subtotal }}</td></tr>
+  {% if order.discount %}
+    <tr><td>{% if order.coupon_code %}{% blocktrans with code=order.coupon_code %}Discount ({{ code }}){% endblocktrans %}{% else %}{% trans "Discount" %}{% endif %}</td><td class="r">−{{ CURRENCY_SYMBOL }}{{ order.discount }}</td></tr>
+  {% endif %}
+  <tr><td>{% trans "Shipping" %}{% if order.shipping_method_name %} — {{ order.shipping_method_name }}{% endif %}</td><td class="r">{{ CURRENCY_SYMBOL }}{{ order.shipping_cost }}</td></tr>
+  <tr><td>{% trans "Tax" %}</td><td class="r">{{ CURRENCY_SYMBOL }}{{ order.tax }}</td></tr>
+  <tr class="grand"><td>{% trans "Total" %}</td><td class="r">{{ CURRENCY_SYMBOL }}{{ order.total }}</td></tr>
+</table>
+
+<p class="muted">
+  {% blocktrans with name=order.shipping_full_name address=order.shipping_address_line %}Shipping to: {{ name }}, {{ address }}{% endblocktrans %}
+</p>

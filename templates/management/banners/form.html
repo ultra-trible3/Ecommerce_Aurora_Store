@@ -1,0 +1,378 @@
+{% extends "management/base.html" %}
+{% load i18n core_tags %}
+
+{% block title %}{% if mode == 'create' %}{% trans "Create banner" %}{% else %}{% trans "Edit banner" %}: {{ form.instance.title }}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:banners' %}"><i class="bi bi-arrow-left"></i> {% trans "Banners" %}</a>
+    <h1 class="mg-title mt-1">{% if mode == 'create' %}{% trans "Create banner" %}{% else %}{% trans "Edit banner" %}: {{ form.instance.title }}{% endif %}</h1>
+  </div>
+  <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:banners' %}">{% trans "Back to list" %}</a>
+</div>
+
+<form method="post" enctype="multipart/form-data" novalidate id="banner-form">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+
+      <!-- Content -->
+      <div class="mg-card mb-4">
+        <div class="mg-card-head"><h5><i class="bi bi-image me-1"></i> {% trans "Content" %}</h5></div>
+        <div class="mg-card-body">
+          <div class="row g-3">
+            <div class="col-md-7 mg-field">
+              <label for="{{ form.title.id_for_label }}">{% trans "Title" %} *</label>
+              {{ form.title }}
+              {% if form.title.errors %}<div class="invalid-feedback d-block">{{ form.title.errors|first }}</div>{% endif %}
+            </div>
+            <div class="col-md-5 mg-field">
+              <label for="{{ form.slug.id_for_label }}">{% trans "Slug" %} *</label>
+              {{ form.slug }}
+              {% if form.slug.errors %}<div class="invalid-feedback d-block">{{ form.slug.errors|first }}</div>{% endif %}
+            </div>
+            <div class="col-md-6 mg-field">
+              <label for="{{ form.image.id_for_label }}">{% trans "Main image" %} *</label>
+              {{ form.image }}
+              {% if form.image.errors %}<div class="invalid-feedback d-block">{{ form.image.errors|first }}</div>{% endif %}
+              <div class="form-text">{% trans "Recommended 1920x600px" %}</div>
+              {% if form.instance.image %}
+              <div class="mt-2"><img src="{{ form.instance.image.url }}" alt="" style="max-width:100%;border-radius:8px"></div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mg-field">
+              <label for="{{ form.mobile_image.id_for_label }}">{% trans "Mobile image" %}</label>
+              {{ form.mobile_image }}
+              {% if form.mobile_image.errors %}<div class="invalid-feedback d-block">{{ form.mobile_image.errors|first }}</div>{% endif %}
+              <div class="form-text">{% trans "Optional — recommended 750x800px" %}</div>
+              {% if form.instance.mobile_image %}
+              <div class="mt-2"><img src="{{ form.instance.mobile_image.url }}" alt="" style="max-width:120px;border-radius:8px"></div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Click behavior -->
+      <div class="mg-card mb-4">
+        <div class="mg-card-head"><h5><i class="bi bi-cursor me-1"></i> {% trans "Click behavior" %}</h5></div>
+        <div class="mg-card-body">
+          <div class="row g-3">
+            <div class="col-12 mg-field">
+              <label for="{{ form.click_action.id_for_label }}">{% trans "When clicked" %}</label>
+              {{ form.click_action }}
+              {% if form.click_action.errors %}<div class="invalid-feedback d-block">{{ form.click_action.errors|first }}</div>{% endif %}
+            </div>
+            <div class="col-12 mg-field" id="link-url-field">
+              <label for="{{ form.link_url.id_for_label }}">{% trans "Destination URL" %}</label>
+              {{ form.link_url }}
+              {% if form.link_url.errors %}<div class="invalid-feedback d-block">{{ form.link_url.errors|first }}</div>{% endif %}
+            </div>
+            <div class="col-12 mg-field" id="modal-content-field">
+              <label for="{{ form.modal_content.id_for_label }}">{% trans "Modal content (HTML)" %}</label>
+              {{ form.modal_content }}
+              {% if form.modal_content.errors %}<div class="invalid-feedback d-block">{{ form.modal_content.errors|first }}</div>{% endif %}
+            </div>
+            <div class="col-md-8 mg-field">
+              <label for="{{ form.button_text.id_for_label }}">{% trans "Button label" %}</label>
+              {{ form.button_text }}
+              {% if form.button_text.errors %}<div class="invalid-feedback d-block">{{ form.button_text.errors|first }}</div>{% endif %}
+              <div class="form-text">{% trans "Call-to-action text shown on the banner" %}</div>
+            </div>
+            <div class="col-md-4 mg-field">
+              <label for="{{ form.button_style.id_for_label }}">{% trans "Button style" %}</label>
+              {{ form.button_style }}
+              {% if form.button_style.errors %}<div class="invalid-feedback d-block">{{ form.button_style.errors|first }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule -->
+      <div class="mg-card mb-4">
+        <div class="mg-card-head"><h5><i class="bi bi-calendar3 me-1"></i> {% trans "Schedule & status" %}</h5></div>
+        <div class="mg-card-body">
+          <div class="row g-3">
+            <div class="col-md-4 mg-field">
+              <label for="{{ form.valid_from.id_for_label }}">{% trans "Starts" %} *</label>
+              {{ form.valid_from }}
+              {% if form.valid_from.errors %}<div class="invalid-feedback d-block">{{ form.valid_from.errors|first }}</div>{% endif %}
+            </div>
+            <div class="col-md-4 mg-field">
+              <label for="{{ form.valid_until.id_for_label }}">{% trans "Ends" %}</label>
+              {{ form.valid_until }}
+              {% if form.valid_until.errors %}<div class="invalid-feedback d-block">{{ form.valid_until.errors|first }}</div>{% endif %}
+              <div class="form-text">{% trans "Leave empty to run indefinitely" %}</div>
+            </div>
+            <div class="col-md-4 d-flex flex-column justify-content-center gap-2">
+              <div class="form-check">
+                {{ form.is_active }}
+                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{% trans "Active" %}</label>
+              </div>
+              <div class="form-check">
+                {{ form.is_popup }}
+                <label class="form-check-label" for="{{ form.is_popup.id_for_label }}">{% trans "Show as popup" %}</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Targeting -->
+      <div class="mg-card mb-4">
+        <div class="mg-card-head"><h5><i class="bi bi-funnel me-1"></i> {% trans "Targeting" %}</h5></div>
+        <div class="mg-card-body">
+          <div class="row g-3">
+            <div class="col-md-4 mg-field">
+              <label for="{{ form.device_target.id_for_label }}">{% trans "Devices" %}</label>
+              {{ form.device_target }}
+              {% if form.device_target.errors %}<div class="invalid-feedback d-block">{{ form.device_target.errors|first }}</div>{% endif %}
+            </div>
+            <div class="col-md-4 mg-field">
+              <label for="{{ form.countries.id_for_label }}">{% trans "Countries" %}</label>
+              {{ form.countries }}
+              {% if form.countries.errors %}<div class="invalid-feedback d-block">{{ form.countries.errors|first }}</div>{% endif %}
+              <div class="form-text">{{ form.countries.help_text }}</div>
+            </div>
+            <div class="col-md-4 mg-field">
+              <label for="{{ form.min_order_count.id_for_label }}">{% trans "Min. orders" %}</label>
+              {{ form.min_order_count }}
+              {% if form.min_order_count.errors %}<div class="invalid-feedback d-block">{{ form.min_order_count.errors|first }}</div>{% endif %}
+              <div class="form-text">{% trans "0 = everyone" %}</div>
+            </div>
+            <div class="col-12 mg-field">
+              <label class="form-label d-block">{% trans "Audience" %}</label>
+              <div class="form-text mb-2">{% trans "Select who should see this banner. You can combine criteria." %}</div>
+
+              <!-- Audience segment toggles -->
+              <div class="row g-2 mb-3">
+                <div class="col-md-4">
+                  <div class="audience-toggle {% if form.user_segments.value|get_item:'new_visitors' %}active{% endif %}" data-seg="new_visitors" role="button" tabindex="0" aria-pressed="{% if form.user_segments.value|get_item:'new_visitors' %}true{% else %}false{% endif %}">
+                    <div class="audience-toggle-icon"><i class="bi bi-person-plus"></i></div>
+                    <div class="audience-toggle-label">{% trans "New visitors" %}</div>
+                    <div class="audience-toggle-desc">{% trans "Never ordered, no account or first visit" %}</div>
+                    <input type="checkbox" class="form-check-input visually-hidden" id="seg-new" data-seg="new_visitors" {% if form.user_segments.value|get_item:'new_visitors' %}checked{% endif %}>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="audience-toggle {% if form.user_segments.value|get_item:'returning' %}active{% endif %}" data-seg="returning" role="button" tabindex="0" aria-pressed="{% if form.user_segments.value|get_item:'returning' %}true{% else %}false{% endif %}">
+                    <div class="audience-toggle-icon"><i class="bi bi-person-check"></i></div>
+                    <div class="audience-toggle-label">{% trans "Returning visitors" %}</div>
+                    <div class="audience-toggle-desc">{% trans "Has an account, visited before" %}</div>
+                    <input type="checkbox" class="form-check-input visually-hidden" id="seg-returning" data-seg="returning" {% if form.user_segments.value|get_item:'returning' %}checked{% endif %}>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="audience-toggle {% if form.user_segments.value|get_item:'has_orders' %}active{% endif %}" data-seg="has_orders" role="button" tabindex="0" aria-pressed="{% if form.user_segments.value|get_item:'has_orders' %}true{% else %}false{% endif %}">
+                    <div class="audience-toggle-icon"><i class="bi bi-bag-check"></i></div>
+                    <div class="audience-toggle-label">{% trans "Has ordered before" %}</div>
+                    <div class="audience-toggle-desc">{% trans "At least one completed order" %}</div>
+                    <input type="checkbox" class="form-check-input visually-hidden" id="seg-orders" data-seg="has_orders" {% if form.user_segments.value|get_item:'has_orders' %}checked{% endif %}>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Show once per session -->
+              <div class="mg-field mt-3">
+                <div class="session-toggle-wrapper">
+                  <div class="session-toggle-info">
+                    <i class="bi bi-clock-history session-toggle-icon"></i>
+                    <div>
+                      <strong>{% trans "Show only once per session" %}</strong>
+                      <div class="small text-muted">{% trans "Banner hides after close/dismiss until browser session ends" %}</div>
+                    </div>
+                  </div>
+                  <div class="form-check form-switch">
+                    {{ form.show_once_per_session }}
+                    <label class="form-check-label ms-2" for="{{ form.show_once_per_session.id_for_label }}"></label>
+                  </div>
+                </div>
+                {% if form.show_once_per_session.errors %}<div class="invalid-feedback d-block">{{ form.show_once_per_session.errors|first }}</div>{% endif %}
+              </div>
+
+              {# driven by the checkboxes above via JS; hidden but kept for submit #}
+              <div class="visually-hidden">{{ form.user_segments }}</div>
+              {% if form.user_segments.errors %}<div class="invalid-feedback d-block">{{ form.user_segments.errors|first }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Display -->
+      <div class="mg-card mb-4">
+        <div class="mg-card-head"><h5><i class="bi bi-palette me-1"></i> {% trans "Display" %}</h5></div>
+        <div class="mg-card-body">
+          <div class="row g-3">
+            <div class="col-md-4 mg-field">
+              <label for="{{ form.position.id_for_label }}">{% trans "Position" %}</label>
+              {{ form.position }}
+              {% if form.position.errors %}<div class="invalid-feedback d-block">{{ form.position.errors|first }}</div>{% endif %}
+              <div class="form-text">{% trans "Higher shows first" %}</div>
+            </div>
+            <div class="col-md-4 mg-field">
+              <label for="{{ form.text_alignment.id_for_label }}">{% trans "Text alignment" %}</label>
+              {{ form.text_alignment }}
+              {% if form.text_alignment.errors %}<div class="invalid-feedback d-block">{{ form.text_alignment.errors|first }}</div>{% endif %}
+            </div>
+            <div class="col-md-4 d-flex align-items-center">
+              <div class="form-check">
+                {{ form.overlay_gradient }}
+                <label class="form-check-label" for="{{ form.overlay_gradient.id_for_label }}">{% trans "Dark gradient overlay" %}</label>
+              </div>
+            </div>
+            <div class="col-12 mg-field">
+              <label for="{{ form.custom_css.id_for_label }}">{% trans "Custom CSS" %}</label>
+              {{ form.custom_css }}
+              {% if form.custom_css.errors %}<div class="invalid-feedback d-block">{{ form.custom_css.errors|first }}</div>{% endif %}
+              <div class="form-text">{% trans "Advanced — overrides banner styling" %}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="mg-btn mg-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {% trans "Save banner" %}</button>
+        <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:banners' %}">{% trans "Cancel" %}</a>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+      <div class="mg-card mb-4">
+        <div class="mg-card-head"><h5><i class="bi bi-eye me-1"></i> {% trans "Preview" %}</h5></div>
+        <div class="mg-card-body">
+          <div id="preview-area" style="min-height:160px;border-radius:8px;background:var(--au-bg-deep,#f4f4f5);display:flex;align-items:center;justify-content:center;overflow:hidden">
+            {% if form.instance.image %}
+            <img src="{{ form.instance.image.url }}" alt="" style="width:100%;border-radius:8px">
+            {% else %}
+            <span class="text-muted small">{% trans "Upload an image to preview it" %}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      {% if mode == 'edit' %}
+      <div class="mg-card mb-4">
+        <div class="mg-card-head"><h5><i class="bi bi-bar-chart me-1"></i> {% trans "Performance" %}</h5></div>
+        <div class="mg-card-body">
+          <div class="row text-center g-3">
+            <div class="col-4">
+              <div class="fw-bold fs-5">{{ form.instance.impressions|default:0 }}</div>
+              <div class="small text-muted">{% trans "Views" %}</div>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold fs-5">{{ form.instance.clicks|default:0 }}</div>
+              <div class="small text-muted">{% trans "Clicks" %}</div>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold fs-5">{{ form.instance.ctr|floatformat:2 }}%</div>
+              <div class="small text-muted">{% trans "CTR" %}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const clickAction = document.getElementById('id_click_action');
+  const linkUrlField = document.getElementById('link-url-field');
+  const modalContentField = document.getElementById('modal-content-field');
+  const linkUrl = document.getElementById('id_link_url');
+  const modalContent = document.getElementById('id_modal_content');
+
+  function toggleFields() {
+    if (!clickAction) return;
+    const isLink = clickAction.value === 'link';
+    linkUrlField.style.display = isLink ? '' : 'none';
+    modalContentField.style.display = isLink ? 'none' : '';
+    if (linkUrl) linkUrl.required = isLink;
+    if (modalContent) modalContent.required = !isLink;
+  }
+  if (clickAction) { clickAction.addEventListener('change', toggleFields); toggleFields(); }
+
+  // Live image preview
+  const imageInput = document.getElementById('id_image');
+  const previewArea = document.getElementById('preview-area');
+  if (imageInput && previewArea) {
+    imageInput.addEventListener('change', function() {
+      const file = this.files && this.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      previewArea.innerHTML = '<img src="' + url + '" alt="" style="width:100%;border-radius:8px">';
+    });
+  }
+
+  // Audience segment toggles <-> hidden checkboxes <-> JSON textarea
+  const segTextarea = document.getElementById('id_user_segments');
+  const segToggles = Array.from(document.querySelectorAll('.audience-toggle'));
+  const segBoxes = Array.from(document.querySelectorAll('[data-seg].form-check-input'));
+
+  function syncToggleUI(checkbox) {
+    const toggle = checkbox.closest('.audience-toggle');
+    if (!toggle) return;
+    if (checkbox.checked) {
+      toggle.classList.add('active');
+      toggle.setAttribute('aria-pressed', 'true');
+    } else {
+      toggle.classList.remove('active');
+      toggle.setAttribute('aria-pressed', 'false');
+    }
+  }
+
+  function segToJSON() {
+    const obj = {};
+    segBoxes.forEach(function(b) { if (b.checked) obj[b.dataset.seg] = true; });
+    if (segTextarea) segTextarea.value = Object.keys(obj).length ? JSON.stringify(obj) : '';
+  }
+
+  function jsonToSeg() {
+    if (!segTextarea) return;
+    let obj = {};
+    try { obj = JSON.parse(segTextarea.value || '{}'); } catch (e) {}
+    segBoxes.forEach(function(b) { b.checked = !!obj[b.dataset.seg]; syncToggleUI(b); });
+  }
+
+  // Click on toggle div -> toggle checkbox
+  segToggles.forEach(function(toggle) {
+    toggle.addEventListener('click', function(e) {
+      // Don't double-trigger if clicking the checkbox itself
+      if (e.target.tagName === 'INPUT') return;
+      const checkbox = this.querySelector('input[data-seg]');
+      if (checkbox) {
+        checkbox.checked = !checkbox.checked;
+        checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    });
+    // Keyboard support
+    toggle.addEventListener('keydown', function(e) {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        this.click();
+      }
+    });
+  });
+
+  // Checkbox change -> update JSON + UI
+  segBoxes.forEach(function(b) {
+    b.addEventListener('change', function() {
+      segToJSON();
+      syncToggleUI(this);
+    });
+  });
+
+  // Initialize from JSON
+  jsonToSeg();
+});
+</script>
+{% endblock %}

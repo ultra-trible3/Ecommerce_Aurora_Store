@@ -1,0 +1,82 @@
+{% load i18n %}
+
+{% if banners %}
+<section class="au-hero-slider carousel {% if banners|length > 1 %}has-controls{% endif %}"
+         id="auHeroSlider"
+         data-bs-ride="carousel"
+         data-bs-interval="5000"
+         data-bs-pause="hover"
+         aria-roledescription="carousel"
+         aria-label="{% trans 'Promotional slides' %}">
+
+  <div class="carousel-inner">
+    {% for banner in banners %}
+    <div class="carousel-item {% if forloop.first %}active{% endif %} {% if banner.overlay_gradient %}has-overlay{% endif %}"
+         data-banner-id="{{ banner.id }}"
+         data-show-once-per-session="{{ banner.show_once_per_session|yesno:'true,false' }}"
+         data-impression-url="{% url 'banners:track_impression' banner.id %}"
+         data-click-url="{% url 'banners:track_click' banner.id %}"
+         data-seen-url="{% url 'banners:mark_seen' banner.id %}"
+         role="group"
+         aria-roledescription="slide"
+         aria-label="{% blocktrans with n=forloop.counter total=banners|length %}Slide {{ n }} of {{ total }}{% endblocktrans %}">
+
+      {% if banner.mobile_image %}
+      <picture>
+        <source media="(max-width: 767px)" srcset="{{ banner.mobile_image.url }}">
+        <img src="{{ banner.image.url }}" alt="{{ banner.title }}" class="au-slide-img" {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+      </picture>
+      {% else %}
+      <img src="{{ banner.image.url }}" alt="{{ banner.title }}" class="au-slide-img" {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %}>
+      {% endif %}
+
+      {% if banner.overlay_gradient %}
+      <span class="au-slide-overlay" aria-hidden="true"></span>
+      {% endif %}
+
+      <div class="au-slide-caption">
+        <div class="container-xxl">
+          {% if banner.link_url %}
+          <a href="{{ banner.link_url }}" class="au-slide-content align-{{ banner.text_alignment|default:'left' }}" data-banner-id="{{ banner.id }}" data-banner-action="link">
+          {% else %}
+          <div class="au-slide-content align-{{ banner.text_alignment|default:'left' }}">
+          {% endif %}
+
+            <span class="au-slide-title">{{ banner.title }}</span>
+            {% if banner.button_text %}
+            <span class="au-slide-headline">
+              {{ banner.button_text }}
+              <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </span>
+            {% endif %}
+
+          {% if banner.link_url %}
+          </a>
+          {% else %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if banners|length > 1 %}
+  <button class="au-slide-ctrl au-slide-prev" type="button" data-bs-target="#auHeroSlider" data-bs-slide="prev" aria-label="{% trans 'Previous slide' %}">
+    <i class="bi bi-chevron-left" aria-hidden="true"></i>
+  </button>
+  <button class="au-slide-ctrl au-slide-next" type="button" data-bs-target="#auHeroSlider" data-bs-slide="next" aria-label="{% trans 'Next slide' %}">
+    <i class="bi bi-chevron-right" aria-hidden="true"></i>
+  </button>
+
+  <div class="au-slide-indicators">
+    {% for banner in banners %}
+    <button type="button" data-bs-target="#auHeroSlider" data-bs-slide-to="{{ forloop.counter0 }}"
+            class="{% if forloop.first %}active{% endif %}"
+            aria-label="{% blocktrans with n=forloop.counter %}Go to slide {{ n }}{% endblocktrans %}"
+            {% if forloop.first %}aria-current="true"{% endif %}></button>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}

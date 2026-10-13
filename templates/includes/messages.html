@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="toast-container position-fixed bottom-0 end-0 p-3" id="toast-host" aria-live="polite">
+  {% for message in messages %}
+    <div class="toast au-toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500">
+      <div class="toast-header">
+        <span class="dot me-2 bg-{% if message.tags == 'danger' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}"></span>
+        <strong class="me-auto">
+          {% if message.tags == 'success' %}{% trans "Success" %}{% elif message.tags == 'danger' %}{% trans "Something went wrong" %}{% elif message.tags == 'warning' %}{% trans "Heads up" %}{% else %}{% trans "Notice" %}{% endif %}
+        </strong>
+        <small class="text-muted">{% trans "now" %}</small>
+        <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="toast-body">{{ message }}</div>
+    </div>
+  {% endfor %}
+</div>

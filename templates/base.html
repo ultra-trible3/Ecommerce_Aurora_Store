@@ -1,0 +1,104 @@
+{% load static core_tags i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% is_rtl as IS_RTL %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" {% if IS_RTL %}dir="rtl"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5efe1">
+  <script>
+    /* Apply the saved (or OS) theme before first paint — no light/dark flash. */
+    (function () {
+      try {
+        var t = localStorage.getItem("au-theme");
+        if (t !== "light" && t !== "dark") {
+          t = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark" : "light";
+        }
+        var el = document.documentElement;
+        el.setAttribute("data-theme", t);
+        el.setAttribute("data-bs-theme", t);
+      } catch (e) {}
+    })();
+  </script>
+  <title>{% block title %}{{ SITE_NAME }} — {{ SITE_TAGLINE }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{% blocktrans %}{{ SITE_NAME }} — shop the latest products at great prices. Fast shipping, secure checkout and friendly support.{% endblocktrans %}{% endblock %}">
+  <meta name="keywords" content="{% block meta_keywords %}{% blocktrans %}ecommerce, online shop, {{ SITE_NAME }}{% endblocktrans %}{% endblock %}">
+  <link rel="canonical" href="{% block canonical %}{{ request.build_absolute_uri }}{% endblock %}">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ SITE_NAME }}">
+  <meta property="og:title" content="{% block og_title %}{{ SITE_NAME }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ SITE_TAGLINE }}{% endblock %}">
+  <meta property="og:url" content="{{ request.build_absolute_uri }}">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'vendor/css/bootstrap.min.css' %}">
+  <link rel="stylesheet" href="{% static 'vendor/css/bootstrap-icons.min.css' %}">
+  <link rel="stylesheet" href="{% static_v 'css/main.css' %}">
+  {% if IS_RTL %}
+  <link rel="stylesheet" href="{% static_v 'css/rtl.css' %}">
+  {% endif %}
+  <link rel="stylesheet" href="{% static_v 'css/dark.css' %}">
+  <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% if IS_RTL %}rtl{% endif %}">
+  {% include "includes/header.html" %}
+
+  <main id="main-content">
+    {% include "includes/messages.html" %}
+    {% block breadcrumbs %}{% endblock %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "includes/newsletter.html" %}
+  {% include "includes/footer.html" %}
+
+  {% include "includes/confirm_modal.html" %}
+  <script src="{% static 'vendor/js/bootstrap.bundle.min.js' %}"></script>
+  <script src="{% static_v 'js/main.js' %}"></script>
+  <script src="{% static_v 'js/theme.js' %}" defer></script>
+  <script src="{% static_v 'js/header-panels.js' %}" defer></script>
+  <script src="{% static_v 'js/notifications.js' %}" defer></script>
+  <script src="{% static 'js/confirm.js' %}" defer></script>
+  <script src="{% static 'js/banners.js' %}" defer></script>
+  <script src="{% static 'js/i18n.js' %}" defer></script>
+  <script>
+    window.CSRF_TOKEN = "{{ csrf_token }}";
+    window.STRIPE_PUBLIC_KEY = "{{ STRIPE_PUBLIC_KEY|default:'' }}";
+    window.SITE_CURRENCY = "{{ CURRENCY_SYMBOL }}";
+  </script>
+  {{ JS_CATALOG|json_script:"au-js-catalog" }}
+  <script>
+    /* Client-side message catalog lookup (see apps/core/i18n_catalog.py). */
+    (function () {
+      var catalog = {};
+      var node = document.getElementById("au-js-catalog");
+      if (node) {
+        try { catalog = JSON.parse(node.textContent) || {}; } catch (err) { catalog = {}; }
+      }
+      window.aul10n = catalog;
+      window.t = function (msg) {
+        return Object.prototype.hasOwnProperty.call(catalog, msg) ? catalog[msg] : msg;
+      };
+      window.ts = function (msg) {
+        var out = window.t(msg);
+        for (var i = 1; i < arguments.length; i++) {
+          out = out.replace("%s", arguments[i]);
+        }
+        return out;
+      };
+    })();
+  </script>
+  <!-- Deal popup (site-wide, once per session; suppressed on auth pages) -->
+  {% block deal_popup %}
+    {% if popup_banner %}{% include "includes/deal_popup.html" %}{% endif %}
+  {% endblock %}
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

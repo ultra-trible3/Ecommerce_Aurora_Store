@@ -1,0 +1,538 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{{ meta_title }} | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ meta_description }}{% endblock %}
+{% if meta_keywords %}{% block meta_keywords %}{{ meta_keywords }}{% endblock %}{% endif %}
+{% block og_title %}{{ product.name }}{% endblock %}
+{% block og_description %}{{ meta_description }}{% endblock %}
+
+{% block extra_css %}
+<script type="application/ld+json">{{ structured_data|safe }}</script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="container-xxl">{% include "includes/breadcrumbs.html" %}</div>
+{% endblock %}
+
+{% block content %}
+<section class="au-section pt-2">
+  <div class="container-xxl">
+    <div class="row g-4 g-lg-5">
+      <!-- Gallery -->
+      <div class="col-lg-6">
+        <div class="au-gallery">
+          <div class="main-img">
+            {% if product.main_image %}
+              <img src="{{ product.main_image.url }}" alt="{{ product.name }}" id="gallery-main">
+            {% else %}
+              <div class="no-image d-flex align-items-center justify-content-center h-100 text-muted-2" style="font-size:4rem">
+                <i class="bi bi-image"></i>
+              </div>
+            {% endif %}
+          </div>
+          {% if gallery %}
+            <div class="thumbs">
+              {% if product.main_image %}
+                <button type="button" class="active" data-gallery-src="{{ product.main_image.url }}" data-gallery-alt="{{ product.name }}">
+                  <img src="{{ product.main_image.url }}" alt="">
+                </button>
+              {% endif %}
+              {% for img in gallery %}
+                <button type="button" data-gallery-src="{{ img.image.url }}" data-gallery-alt="{{ img.alt_text }}">
+                  <img src="{{ img.image.url }}" alt="{{ img.alt_text }}" loading="lazy">
+                </button>
+              {% endfor %}
+            </div>
+          {% endif %}
+          <p class="small text-muted-2 mt-2 mb-0"><i class="bi bi-images me-1"></i> {% trans "Click the image to open the photo album" %}</p>
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="col-lg-6">
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+          {% if product.brand %}
+            <a href="{{ product.brand.get_absolute_url }}" class="small fw-semibold text-muted text-uppercase text-decoration-none">{{ product.brand.name }}</a>
+            <span class="text-muted-2">·</span>
+          {% endif %}
+          <a href="{{ product.category.get_absolute_url }}" class="small text-muted text-decoration-none">{{ product.category.full_name }}</a>
+        </div>
+
+        <h1 class="h2 mb-2" style="letter-spacing:-.03em">{{ product.name }}</h1>
+
+        <div class="d-flex align-items-center gap-3 flex-wrap mb-3">
+          {% if product.rating_count %}
+            <a href="#reviews" class="d-flex align-items-center gap-2 text-decoration-none">
+              {% include "includes/stars.html" with rating=product.rating_average large=True %}
+              <span class="small text-muted">{{ review_avg|floatformat:1 }} · {% blocktrans count count=product.rating_count %}{{ count }} review{% plural %}{{ count }} reviews{% endblocktrans %}</span>
+            </a>
+          {% else %}
+            <span class="small text-muted"><i class="bi bi-star me-1"></i>{% trans "No reviews yet" %}</span>
+          {% endif %}
+          <span class="small text-muted-2">{% trans "SKU" %}: <b class="text-ink">{{ product.sku }}</b></span>
+          {% if product.sold_count %}<span class="small text-muted-2">{% blocktrans with count=product.sold_count %}{{ count }} sold{% endblocktrans %}</span>{% endif %}
+        </div>
+
+        <div class="d-flex align-items-baseline gap-3 mb-2">
+          <span class="fw-bold" style="font-size:2rem;color:var(--au-ink)" id="product-price">
+            {{ product.current_price|currency }}
+          </span>
+          {% if product.is_on_sale %}
+            <span class="text-muted text-decoration-line-through" id="product-was-price">{{ product.price|currency }}</span>
+            <span class="au-flag sale" style="position:static">{% blocktrans with percent=product.discount_percent %}Save {{ percent }}%{% endblocktrans %}</span>
+          {% endif %}
+        </div>
+        <p class="small text-muted">{% trans "Tax included. Shipping calculated at checkout." %}</p>
+
+        {% if product.short_description %}
+          <p class="mb-4">{{ product.short_description }}</p>
+        {% endif %}
+
+        <!-- Variants -->
+        {% if variants %}
+          <div id="variant-selector" class="mb-4">
+            <div class="mb-3">
+              <div class="form-label mb-2">{% trans "Choose an option" %}</div>
+              <div class="d-flex gap-2 flex-wrap" id="variant-list">
+                {% for variant in variants %}
+                  <button type="button"
+                          class="au-variant {% if active_variant and variant.pk == active_variant.pk %}active{% endif %}"
+                          data-variant-id="{{ variant.pk }}"
+                          data-price="{{ variant.current_price|currency }}"
+                          {% if variant.is_on_sale %}data-sale-price="1" data-was-price="{{ variant.base_price|currency }}"{% endif %}
+                          data-stock="{{ variant.available_quantity }}"
+                          {% if not variant.is_in_stock %}disabled{% endif %}>
+                    {% if variant.color_hex %}<span class="au-swatch d-inline-block me-1" style="background:{{ variant.color_hex }};vertical-align:middle"></span>{% endif %}
+                    {{ variant.name }}
+                    {% if variant.is_in_stock %}
+                      <span class="text-muted-2" style="font-weight:500">· {% blocktrans with count=variant.available_quantity %}{{ count }} left{% endblocktrans %}</span>
+                    {% endif %}
+                  </button>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
+<!-- Stock -->
+        <div class="mb-3 small" id="product-stock">
+          {% if product.is_in_stock %}
+            <i class="bi bi-check-circle-fill text-success me-1"></i>
+            {% trans "In stock" %}
+            {% if product.stock_status == 'low' %}
+              <span class="text-warning ms-1">{% blocktrans with count=product.available_quantity %}— only {{ count }} left{% endblocktrans %}</span>
+            {% endif %}
+          {% else %}
+            <i class="bi bi-x-circle-fill text-danger me-1"></i> {% trans "Out of stock" %}
+          {% endif %}
+        </div>
+
+        <!-- Notify Me When Back in Stock -->
+        {% if not product.is_in_stock %}
+        <div class="mb-3" id="stock-alert-form">
+          <form method="post" action="{% url 'catalog:stock_alert' product.slug %}" data-ajax-post class="d-flex flex-wrap gap-2 align-items-center">
+            {% csrf_token %}
+            <input type="hidden" name="variant_id" id="stock-alert-variant" value="{{ active_variant.pk|default:'' }}">
+            <label for="stock-alert-email" class="form-label me-2 mb-0 small">{% trans "Notify me:" %}</label>
+            <input type="email" name="email" id="stock-alert-email" class="form-control form-control-sm" style="width:auto;max-width:280px" placeholder="your@email.com" required>
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-bell"></i> {% trans "Notify me" %}
+            </button>
+            <span class="small text-muted ms-2" id="stock-alert-msg"></span>
+          </form>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <form method="post" action="{% url 'cart:add' %}" data-ajax-post class="d-flex flex-wrap gap-2 align-items-center mb-3">
+          {% csrf_token %}
+          <input type="hidden" name="product" value="{{ product.pk }}">
+          <input type="hidden" name="variant" id="variant-input" value="{{ active_variant.pk|default:'' }}">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+          <div class="au-qty">
+            <button type="button" data-qty-step="down" aria-label="{% trans 'Decrease quantity' %}">−</button>
+            <input type="number" name="quantity" id="qty-input" value="1" min="1"
+                   max="{{ product.available_quantity|default:1 }}" aria-label="{% trans 'Quantity' %}">
+            <button type="button" data-qty-step="up" aria-label="{% trans 'Increase quantity' %}">+</button>
+          </div>
+
+          <button class="btn btn-primary btn-lg" type="submit" id="add-to-cart-btn"
+                  {% if not product.is_in_stock %}disabled{% endif %}>
+            <i class="bi bi-bag-plus"></i> {% trans "Add to cart" %}
+          </button>
+
+          <a class="btn btn-lg btn-outline-secondary" href="{% url 'checkout:start' %}?buy_now={{ product.pk }}"
+             {% if not product.is_in_stock %}aria-disabled="true" tabindex="-1"{% endif %}>
+            <i class="bi bi-lightning"></i> {% trans "Buy now" %}
+          </a>
+        </form>
+
+        <div class="d-flex gap-2 mb-4">
+          <form method="post" action="{% url 'wishlist:toggle' %}">
+            {% csrf_token %}
+            <input type="hidden" name="slug" value="{{ product.slug }}">
+            <button class="btn btn-sm btn-outline-secondary wishlist-toggle" type="submit" data-product="{{ product.slug }}">
+              <i class="bi bi-heart"></i> {% trans "Wishlist" %}
+            </button>
+          </form>
+          <button class="btn btn-sm btn-outline-secondary compare-toggle {% if product.slug in compare_slugs %}is-active{% endif %}"
+                  type="button" data-product="{{ product.slug }}">
+            <i class="bi {% if product.slug in compare_slugs %}bi-columns-fill{% else %}bi-columns{% endif %}"></i> {% trans "Compare" %}
+          </button>
+          <button class="btn btn-sm btn-outline-secondary" type="button"
+                  onclick="navigator.clipboard && navigator.clipboard.writeText(location.href); window.showToast(t('Link copied'),t('Product link copied to your clipboard.'),'success')">
+            <i class="bi bi-share"></i> {% trans "Share" %}
+          </button>
+        </div>
+
+        <!-- Trust strip -->
+        <div class="row g-3 text-muted small">
+          <div class="col-6"><i class="bi bi-truck text-primary me-1"></i> {% trans "Fast dispatch, free over $75" %}</div>
+          <div class="col-6"><i class="bi bi-arrow-repeat text-primary me-1"></i> {% trans "30-day returns" %}</div>
+          <div class="col-6"><i class="bi bi-shield-check text-primary me-1"></i> {% trans "Secure checkout" %}</div>
+          <div class="col-6"><i class="bi bi-headset text-primary me-1"></i> {% trans "Friendly support" %}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="au-tabs mt-5">
+      <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-desc" type="button">{% trans "Description" %}</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-specs" type="button">{% trans "Specifications" %}</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-ship" type="button">{% trans "Shipping & returns" %}</button></li>
+        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#reviews" type="button">{% blocktrans with count=product.rating_count %}Reviews ({{ count }}){% endblocktrans %}</button></li>
+      </ul>
+
+      <div class="tab-content pt-4">
+        <div class="tab-pane fade show active" id="tab-desc">
+          <div class="row">
+            <div class="col-lg-8">
+              {% if product.full_description %}
+                <div style="white-space:pre-line">{{ product.full_description }}</div>
+              {% elif product.short_description %}
+                <p>{{ product.short_description }}</p>
+              {% else %}
+                <p class="text-muted">{% trans "No description has been written for this product yet." %}</p>
+              {% endif %}
+            </div>
+            <div class="col-lg-4">
+              <div class="au-card p-4">
+                <h6 class="mb-3">{% trans "At a glance" %}</h6>
+                <div class="au-info-row"><span class="label">{% trans "SKU" %}</span><span>{{ product.sku }}</span></div>
+                {% if product.brand %}<div class="au-info-row"><span class="label">{% trans "Brand" %}</span><span>{{ product.brand.name }}</span></div>{% endif %}
+                <div class="au-info-row"><span class="label">{% trans "Category" %}</span><span>{{ product.category.full_name }}</span></div>
+                {% if product.weight %}<div class="au-info-row"><span class="label">{% trans "Weight" %}</span><span>{{ product.weight }} kg</span></div>{% endif %}
+                {% if product.dimensions %}<div class="au-info-row"><span class="label">{% trans "Dimensions" %}</span><span>{{ product.dimensions }}</span></div>{% endif %}
+                <div class="au-info-row"><span class="label">{% trans "Availability" %}</span>
+                  <span>{% if product.is_in_stock %}{% blocktrans with count=product.available_quantity %}In stock ({{ count }}){% endblocktrans %}{% else %}{% trans "Out of stock" %}{% endif %}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-specs">
+          <div class="table-responsive" style="max-width:720px">
+            <table class="table table-striped align-middle">
+              <tbody>
+                {% for group in option_groups %}
+                  <tr><th style="width:35%">{{ group.name }}</th>
+                      <td>{% for value_id, v in group.values.items %}{{ v.value }}{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>
+                {% endfor %}
+                <tr><th>{% trans "SKU" %}</th><td>{{ product.sku }}</td></tr>
+                {% if product.weight %}<tr><th>{% trans "Weight" %}</th><td>{{ product.weight }} kg</td></tr>{% endif %}
+                {% if product.dimensions %}<tr><th>{% trans "Dimensions" %}</th><td>{{ product.dimensions }}</td></tr>{% endif %}
+                {% if product.brand %}<tr><th>{% trans "Brand" %}</th><td>{{ product.brand.name }}</td></tr>{% endif %}
+                <tr><th>{% trans "Category" %}</th><td>{{ product.category.full_name }}</td></tr>
+                <tr><th>{% trans "Warranty" %}</th><td>{% trans "12 months limited manufacturer warranty" %}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-ship">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <div class="au-card p-4 h-100">
+                <h6><i class="bi bi-truck text-primary me-2"></i>{% trans "Shipping" %}</h6>
+                <ul class="mb-0 ps-3 text-muted small">
+                  <li>{% trans "Orders placed before 2pm ship the same day." %}</li>
+                  <li>{% trans "Standard delivery: 3–5 business days." %}</li>
+                  <li>{% trans "Express options available at checkout." %}</li>
+                  <li>{% trans "Free standard shipping on orders over $75." %}</li>
+                  <li>{% trans "Tracking link emailed as soon as your parcel ships." %}</li>
+                </ul>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="au-card p-4 h-100">
+                <h6><i class="bi bi-arrow-repeat text-primary me-2"></i>{% trans "Returns" %}</h6>
+                <ul class="mb-0 ps-3 text-muted small">
+                  <li>{% trans "30 days to change your mind." %}</li>
+                  <li>{% trans "Items must be unused and in original packaging." %}</li>
+                  <li>{% trans "Refunds issued to the original payment method." %}</li>
+                  <li>{% trans "Damaged in transit? Contact support for an instant replacement." %}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="reviews">
+          <div class="row g-4">
+            <div class="col-lg-4">
+              <div class="au-card p-4 text-center">
+                <div class="display-4 fw-bold text-ink">{{ review_avg|floatformat:1 }}</div>
+                {% include "includes/stars.html" with rating=review_avg large=True %}
+                <div class="small text-muted mt-1">{% blocktrans count count=total_reviews %}Based on {{ count }} review{% plural %}Based on {{ count }} reviews{% endblocktrans %}</div>
+                <div class="au-rating-bars mt-3 text-start">
+                  {% for star in "54321" %}{% with n=star|add:0 %}
+                    {% with count=breakdown|get_item:n %}
+                      <div class="row-bar">
+                        <span style="width:12px">{{ n }}★</span>
+                        <span class="bar"><span style="width:{% widthratio count total_reviews_for_avg 100 %}%"></span></span>
+                        <span style="width:28px;text-align:right">{{ count|default:0 }}</span>
+                      </div>
+                    {% endwith %}
+                  {% endwith %}{% endfor %}
+                </div>
+              </div>
+
+              {% if user.is_authenticated %}
+                <div class="au-card p-4 mt-3">
+                  <h6 class="mb-3">{% trans "Write a review" %}</h6>
+                  <form method="post" action="{% url 'reviews:create' product.slug %}">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                      <label class="form-label">{% trans "Your rating" %}</label>
+                      <div class="d-flex gap-1 fs-5" id="rating-picker">
+                        {% for i in "12345" %}{% with n=i|add:0 %}
+                          <button class="btn btn-sm btn-light border rating-star" type="button" data-rating="{{ n }}">
+                            <i class="bi bi-star"></i>
+                          </button>
+                        {% endwith %}{% endfor %}
+                      </div>
+                      <input type="hidden" name="rating" id="rating-input" value="5">
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label" for="rv-title">{% trans "Title" %} <span class="text-muted">{% trans "(optional)" %}</span></label>
+                      <input class="form-control" id="rv-title" name="title" maxlength="200" placeholder="{% trans 'Sums it up' %}">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="rv-body">{% trans "Review" %}</label>
+                      <textarea class="form-control" id="rv-body" name="body" rows="4" required
+                                placeholder="{% trans 'What did you like or dislike?' %}"></textarea>
+                    </div>
+                    <button class="btn btn-primary w-100" type="submit">{% trans "Submit review" %}</button>
+                    <p class="small text-muted mt-2 mb-0">
+                      <i class="bi bi-shield-check"></i> {% trans "Reviews are moderated before publishing." %}
+                    </p>
+                  </form>
+                </div>
+              {% else %}
+                <div class="au-card p-4 mt-3 text-center">
+                  <p class="text-muted small mb-2">{% trans "Purchased this product?" %}</p>
+                  <a class="btn btn-sm btn-primary" href="{% url 'accounts:login' %}?next={{ request.get_full_path }}">{% trans "Sign in to review" %}</a>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="col-lg-8">
+              {% if reviews %}
+                {% for review in reviews %}
+                  <div class="au-review">
+                    <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                      <div class="d-flex gap-3 align-items-center">
+                        <span class="au-avatar">{{ review.user.initials }}</span>
+                        <div>
+                          <b class="d-block">{{ review.user.get_full_name|default:review.user.username }}</b>
+                          {% include "includes/stars.html" with rating=review.rating %}
+                          {% if review.is_verified_purchase %}
+                            <span class="badge bg-success-subtle text-success ms-2" style="font-size:.68rem">
+                              <i class="bi bi-patch-check"></i> {% trans "Verified purchase" %}
+                            </span>
+                          {% endif %}
+                        </div>
+                      </div>
+                      <span class="small text-muted">{{ review.created_at|date:"M j, Y" }}</span>
+                    </div>
+                    {% if review.title %}<h6 class="mt-3 mb-1">{{ review.title }}</h6>{% endif %}
+                    <p class="mb-1" style="white-space:pre-line">{{ review.body }}</p>
+                    {% if review.admin_reply %}
+                      <div class="ms-4 p-3 rounded-3" style="background:var(--au-bg-alt)">
+                        <b class="small">{% trans "Store reply" %}</b>
+                        <p class="small mb-0 text-muted">{{ review.admin_reply }}</p>
+                      </div>
+                    {% endif %}
+                    {% if review.images.all %}
+                      <div class="d-flex gap-2 mt-2">
+                        {% for img in review.images.all %}
+                          <a href="{{ img.image.url }}" target="_blank">
+                            <img src="{{ img.image.url }}" alt="{% trans 'Review photo' %}" style="width:64px;height:64px;object-fit:cover;border-radius:8px">
+                          </a>
+                        {% endfor %}
+                      </div>
+                    {% endif %}
+                  </div>
+                {% endfor %}
+                <div class="mt-3">{% include "includes/pagination.html" with page_obj=reviews %}</div>
+              {% else %}
+                <div class="au-empty">
+                  <div class="glyph"><i class="bi bi-chat-square-text"></i></div>
+                  <h3>{% trans "No reviews yet" %}</h3>
+                  <p>{% blocktrans with name=product.name %}Be the first to share what you think about {{ name }}.{% endblocktrans %}</p>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- Related -->
+    {% if related %}
+      <div class="au-section-head mt-5 mb-3">
+        <div>
+          <span class="au-eyebrow"><i class="bi bi-collection"></i> {% trans "You may also like" %}</span>
+          <h2 class="h4">{% trans "Related products" %}</h2>
+        </div>
+      </div>
+      <div class="row g-3 g-md-4">
+        {% for product in related %}
+          <div class="col-6 col-md-3">
+            {% include "includes/product_card.html" with product=product %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Frequently bought together -->
+    {% if fbt %}
+      <div class="au-section-head mt-5 mb-3">
+        <div>
+          <span class="au-eyebrow"><i class="bi bi-bag-check"></i> {% trans "Bought together" %}</span>
+          <h2 class="h4">{% trans "Frequently bought together" %}</h2>
+        </div>
+      </div>
+      <div class="row g-3 g-md-4">
+        {% for product in fbt %}
+          <div class="col-6 col-md-3">
+            {% include "includes/product_card.html" with product=product %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Recently Viewed -->
+    {% if recently_viewed_products %}
+      <div class="au-section-head mt-5 mb-3">
+        <div>
+          <span class="au-eyebrow"><i class="bi bi-clock-history"></i> {% trans "Recently viewed" %}</span>
+          <h2 class="h4">{% trans "Your recent history" %}</h2>
+        </div>
+      </div>
+      <div class="row g-3 g-md-4">
+        {% for product in recently_viewed_products %}
+          <div class="col-6 col-md-3">
+            {% include "includes/product_card.html" with product=product %}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Product album lightbox -->
+<div class="modal fade au-lightbox" id="productLightbox" tabindex="-1" aria-hidden="true" aria-label="{% trans 'Product images' %}">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="au-lightbox-top">
+        <span class="au-lightbox-count" id="lb-count">1 / 1</span>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="au-lightbox-stage">
+        <button type="button" class="au-lightbox-nav prev" id="lb-prev" aria-label="{% trans 'Previous image' %}"><i class="bi bi-chevron-left"></i></button>
+        <img src="" alt="" id="lb-img">
+        <button type="button" class="au-lightbox-nav next" id="lb-next" aria-label="{% trans 'Next image' %}"><i class="bi bi-chevron-right"></i></button>
+      </div>
+      <div class="au-lightbox-thumbs" id="lb-thumbs"></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const picker = document.getElementById("rating-picker");
+    if (picker) {
+      const input = document.getElementById("rating-input");
+      const paint = (value) => {
+        picker.querySelectorAll(".rating-star").forEach((btn) => {
+          const on = parseInt(btn.dataset.rating, 10) <= value;
+          btn.querySelector("i").className = on ? "bi bi-star-fill text-warning" : "bi bi-star";
+        });
+      };
+      picker.addEventListener("click", (e) => {
+        const btn = e.target.closest(".rating-star");
+        if (!btn) return;
+        input.value = btn.dataset.rating;
+        paint(parseInt(btn.dataset.rating, 10));
+      });
+      paint(parseInt(input.value, 10));
+    }
+  })();
+
+  // Update stock alert variant when variant is selected
+  document.addEventListener("click", function(e) {
+    const variantBtn = e.target.closest(".au-variant");
+    if (!variantBtn) return;
+    const variantId = variantBtn.dataset.variantId;
+    const stockAlertVariant = document.getElementById("stock-alert-variant");
+    if (stockAlertVariant) {
+      stockAlertVariant.value = variantId || "";
+    }
+  });
+
+  // Handle stock alert form submission feedback
+  document.addEventListener("submit", function(e) {
+    const form = e.target.closest("#stock-alert-form form");
+    if (!form) return;
+    const msgEl = document.getElementById("stock-alert-msg");
+    const btn = form.querySelector('button[type="submit"]');
+    const originalBtnText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+    fetch(form.action, {
+      method: "POST",
+      body: new FormData(form),
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+    .then(r => r.json())
+    .then(data => {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText;
+      if (msgEl) {
+        msgEl.textContent = data.message;
+        msgEl.className = "small " + (data.ok ? "text-success" : "text-danger");
+      }
+      if (data.ok) {
+        form.querySelector('input[type="email"]').value = "";
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.innerHTML = originalBtnText;
+      if (msgEl) {
+        msgEl.textContent = t("Something went wrong. Please try again.");
+        msgEl.className = "small text-danger";
+      }
+    });
+    e.preventDefault();
+  });
+</script>
+{% endblock %}

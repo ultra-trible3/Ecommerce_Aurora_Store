@@ -1,0 +1,36 @@
+{% load core_tags i18n %}
+<div class="au-filter-bar">
+  <div class="d-flex align-items-center gap-2">
+    <button class="btn btn-sm btn-outline-secondary d-lg-none" type="button" id="filter-toggle">
+      <i class="bi bi-funnel"></i> {% trans "Filters" %}
+    </button>
+    <span class="small text-muted">
+      {% if page_obj %}{% blocktrans with start=page_obj.start_index end=page_obj.end_index total=page_obj.paginator.count %}Showing {{ start }}–{{ end }} of {{ total }} products{% endblocktrans %}{% endif %}
+    </span>
+  </div>
+
+  {% if active_filters %}
+    <div class="d-flex gap-2 flex-wrap">
+      {% for key, label in active_filters %}
+        <span class="au-chip">
+          {{ label }}
+          <button type="button" data-remove-param="" aria-label="{% trans 'Remove filter' %}"
+                  onclick="removeFilterParam('{{ key }}')">&times;</button>
+        </span>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="ms-auto d-flex align-items-center gap-2">
+    <label class="small text-muted mb-0" for="sort-select">{% trans "Sort by" %}</label>
+    <select class="form-select form-select-sm" style="width:auto" id="sort-select"
+            onchange="window.location.href=this.value">
+      <option value="{% querystring sort='newest' %}" {% if sort == 'newest' %}selected{% endif %}>{% trans "Newest" %}</option>
+      <option value="{% querystring sort='price_asc' %}" {% if sort == 'price_asc' %}selected{% endif %}>{% trans "Price: low to high" %}</option>
+      <option value="{% querystring sort='price_desc' %}" {% if sort == 'price_desc' %}selected{% endif %}>{% trans "Price: high to low" %}</option>
+      <option value="{% querystring sort='popular' %}" {% if sort == 'popular' %}selected{% endif %}>{% trans "Most popular" %}</option>
+      <option value="{% querystring sort='rating' %}" {% if sort == 'rating' %}selected{% endif %}>{% trans "Best rated" %}</option>
+      <option value="{% querystring sort='discount' %}" {% if sort == 'discount' %}selected{% endif %}>{% trans "Biggest discount" %}</option>
+    </select>
+  </div>
+</div>

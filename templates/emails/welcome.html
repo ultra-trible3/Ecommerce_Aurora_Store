@@ -1,0 +1,9 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+{% block title %}{% blocktrans with site=SITE_NAME %}Welcome to {{ site }}{% endblocktrans %}{% endblock %}
+{% block content %}
+  <h1>{% blocktrans with site=SITE_NAME %}Welcome to {{ site }}{% endblocktrans %}</h1>
+  <p>{% blocktrans with name=user.get_full_name|default:user.username %}Hi {{ name }},{% endblocktrans %}</p>
+  <p>{% trans "Your account is ready. Save your addresses, track orders in one place and get early access to new arrivals." %}</p>
+  <p><a class="btn" href="{{ SITE_URL }}/shop/">{% trans "Start shopping" %}</a></p>
+{% endblock %}

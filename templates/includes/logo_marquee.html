@@ -1,0 +1,51 @@
+{% load i18n static %}
+{% comment %}
+Reusable LogoMarquee — a CSS-only, seamless, infinite brand logo ticker.
+
+Usage
+-----
+Default list (from the ``logo_marquee`` context processor):
+
+    {% include "includes/logo_marquee.html" %}
+
+Custom list for one page (``image`` is a static-relative path):
+
+    {% include "includes/logo_marquee.html" with logos=my_list %}
+
+Each item is a dict: ``{"name": "Acme", "image": "images/brands/acme.svg"}``.
+
+Tuning
+------
+Speed, spacing, logo height and scroll direction are CSS variables on
+``.au-marquee`` (see static/css/main.css): ``--au-marquee-speed``,
+``--au-marquee-gap``, ``--au-marquee-logo-h``, ``--au-marquee-direction``.
+
+The track renders the logo set **four times** and slides by exactly one set
+width (``100% / copies``), so a fresh set always occupies the viewport and the
+loop is pixel-perfect — no gap, jump or reset, even on ultra-wide screens.
+``--au-marquee-copies`` in main.css must match the number of loops below.
+{% endcomment %}
+{% with items=logos|default:marquee_logos %}
+  {% if items %}
+  <section class="au-marquee-section" aria-label="{% trans 'Trusted by leading brands' %}">
+    <div class="container-xxl">
+      <p class="au-marquee-title">{% trans "Trusted by leading brands" %}</p>
+    </div>
+    <div class="au-marquee">
+      <div class="au-marquee-viewport">
+        <div class="au-marquee-track">
+          {% for copy in "1234" %}{% for logo in items %}
+            <div class="au-marquee-item">
+              <img class="au-marquee-logo"
+                   src="{% static logo.image %}"
+                   alt="{{ logo.name }}"
+                   loading="lazy"
+                   decoding="async">
+            </div>
+          {% endfor %}{% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+{% endwith %}

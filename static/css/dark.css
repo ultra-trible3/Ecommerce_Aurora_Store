@@ -1,0 +1,471 @@
+/* =====================================================================
+   Aurora Store — Dark theme
+   ---------------------------------------------------------------------
+   Activated by <html data-theme="dark"> (set before first paint by the
+   inline script in base.html; persisted in localStorage "au-theme";
+   defaults to the OS preference). Bootstrap surfaces flip automatically
+   through data-bs-theme="dark"; this file re-skins Aurora's own tokens
+   and every component that hardcodes a light surface.
+   Loaded LAST (after main.css and rtl.css) so overrides always win.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------------
+   1. Design tokens
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Brand: wine stays deep wherever white text sits on it (see the
+     re-scope group in §3); as text/border on dark it goes brighter. */
+  --au-wine: #a31624;
+  --au-wine-dark: #7d1019;
+  --au-sand: #e5d3af;
+  --au-sand-deep: #d8c49f;
+  --au-cream: #f5efe1;
+  --au-steel: #4a423b;
+
+  --au-primary: #e5404e;        /* text, icons, borders on dark (AA) */
+  --au-primary-hover: #c2202e;
+  --au-primary-soft: #35191d;   /* hover-row tint (was sand) */
+  --au-primary-soft-2: #422024;
+  --au-accent: #7fa7c2;
+  --au-success: #4ade80;
+  --au-warning: #fbbf24;
+  --au-danger: #ff8085;         /* as text on dark (AA) */
+
+  --au-ink: #f3ebe4;
+  --au-body: #d5cac1;
+  --au-muted: #a4968d;
+  --au-muted-2: #8a7d75;
+  --au-border: #574c45;
+  --au-border-soft: #332c27;
+  --au-bg: #141110;
+  --au-bg-alt: #1e1a17;
+  --au-bg-deep: #292421;
+
+  --au-shadow-sm: 0 1px 2px rgba(0, 0, 0, .35), 0 1px 3px rgba(0, 0, 0, .3);
+  --au-shadow: 0 4px 6px -1px rgba(0, 0, 0, .45), 0 2px 4px -2px rgba(0, 0, 0, .35);
+  --au-shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, .5), 0 8px 10px -6px rgba(0, 0, 0, .4);
+
+  /* Bootstrap primary alias (badges, .text-primary, borders) */
+  --bs-primary: #c2202e;
+  --bs-primary-rgb: 194, 32, 46;
+}
+
+/* ---------------------------------------------------------------------
+   2. Re-scope: solid brand surfaces keep white-text-safe wine
+   These elements paint with var(--au-primary) while white text sits on
+   top; re-defining the token ON the element keeps that pair accessible
+   while the rest of the page uses the brighter dark-mode value.
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] .au-topbar,
+html[data-theme="dark"] .au-mobile-topbar,
+html[data-theme="dark"] .au-footer,
+html[data-theme="dark"] .au-search .au-search-btn,
+html[data-theme="dark"] .au-brand .brand-mark,
+html[data-theme="dark"] .au-lang-btn.is-active,
+html[data-theme="dark"] .btn-primary,
+html[data-theme="dark"] .btn-icon.is-active,
+html[data-theme="dark"] .btn.compare-toggle.is-active,
+html[data-theme="dark"] .chip.active,
+html[data-theme="dark"] .au-promo,
+html[data-theme="dark"] .au-auth-aside,
+html[data-theme="dark"] .au-avatar,
+html[data-theme="dark"] .deal-promo-btn,
+html[data-theme="dark"] .au-steps li.done::before,
+html[data-theme="dark"] .au-steps li.current::before,
+html[data-theme="dark"] .au-timeline li.current::before,
+html[data-theme="dark"] .au-pagination .page-item.active .page-link,
+html[data-theme="dark"] .au-notif .au-notif-read:hover,
+html[data-theme="dark"] .au-crop-ok {
+  --au-primary: #a31624;
+  --au-primary-hover: #c2202e;
+}
+
+/* Solid wine badges/flags that pair var(--au-danger) with white text */
+html[data-theme="dark"] .au-badge-count {
+  background: #c0181f;
+  border-color: var(--au-bg-alt);
+}
+html[data-theme="dark"] .au-flag.sale { background: #b91c1c; }
+html[data-theme="dark"] .au-confirm-ok { background: #b91c1c; }
+
+/* ---------------------------------------------------------------------
+   3. Surfaces that hardcoded #fff / light fills
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] .au-header {
+  background: rgba(30, 26, 23, .92);
+}
+html[data-theme="dark"] .au-subnav {
+  background: var(--au-bg-alt);
+  border-top-color: var(--au-border);
+}
+html[data-theme="dark"] .au-card,
+html[data-theme="dark"] .au-product,
+html[data-theme="dark"] .au-cat,
+html[data-theme="dark"] .au-testimonial,
+html[data-theme="dark"] .au-form-card,
+html[data-theme="dark"] .au-filter-bar,
+html[data-theme="dark"] .au-sidebar,
+html[data-theme="dark"] .au-summary,
+html[data-theme="dark"] .au-address,
+html[data-theme="dark"] .au-pay-option,
+html[data-theme="dark"] .au-order-items,
+html[data-theme="dark"] .au-order-thumb,
+html[data-theme="dark"] .au-suggest,
+html[data-theme="dark"] .au-hero-art .hero-price,
+html[data-theme="dark"] .deal-promo-content,
+html[data-theme="dark"] .deal-promo-footer,
+html[data-theme="dark"] .au-toast,
+html[data-theme="dark"] .au-toast .toast-header,
+html[data-theme="dark"] .au-drawer,
+html[data-theme="dark"] .au-panel-foot,
+html[data-theme="dark"] .au-variant,
+html[data-theme="dark"] .au-gallery .thumbs button,
+html[data-theme="dark"] .btn-icon,
+html[data-theme="dark"] .au-compare-remove .btn-icon,
+html[data-theme="dark"] .au-compare tbody th[scope="row"],
+html[data-theme="dark"] .au-notif .au-notif-read,
+html[data-theme="dark"] .chip,
+html[data-theme="dark"] .au-confirm-cancel,
+html[data-theme="dark"] .au-crop-cancel,
+html[data-theme="dark"] .au-timeline li::before,
+html[data-theme="dark"] .au-search input:focus {
+  background-color: var(--au-bg-alt);
+}
+
+html[data-theme="dark"] .au-drawer {
+  box-shadow: -18px 0 44px rgba(0, 0, 0, .5);
+}
+html[data-theme="dark"] .au-compare tbody tr:nth-child(even) td {
+  background: #241f1c;
+}
+
+/* Inputs: main.css hardcodes white for real form controls */
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select {
+  background-color: var(--au-bg-alt);
+  color: var(--au-ink);
+  border-color: var(--au-border);
+}
+html[data-theme="dark"] .form-control:focus,
+html[data-theme="dark"] .form-select:focus {
+  background-color: var(--au-bg-alt);
+  color: var(--au-ink);
+}
+html[data-theme="dark"] .btn-light {
+  --bs-btn-bg: var(--au-bg-alt);
+  --bs-btn-border-color: var(--au-border);
+  --bs-btn-color: var(--au-ink);
+  --bs-btn-hover-bg: var(--au-bg-deep);
+  --bs-btn-hover-border-color: var(--au-border);
+  --bs-btn-hover-color: var(--au-ink);
+  --bs-btn-active-bg: var(--au-bg-deep);
+  --bs-btn-active-color: var(--au-ink);
+}
+
+/* Product flag sits on imagery — keep it near-black like light mode */
+html[data-theme="dark"] .au-flag {
+  background: #100d0c;
+  color: #fff;
+}
+
+/* Focus ring on the pill search */
+html[data-theme="dark"] .au-search input:focus {
+  border-color: var(--au-primary);
+  box-shadow: 0 0 0 4px rgba(229, 64, 78, .18);
+}
+
+/* ---------------------------------------------------------------------
+   4. Status chips & semantic badges (pastel → dark-tinted)
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] .au-status.pending {
+  background: #3a2e14;
+  color: #fcd34d;
+}
+html[data-theme="dark"] .au-status.confirmed,
+html[data-theme="dark"] .au-status.processing {
+  background: #17263a;
+  color: #93c5fd;
+}
+html[data-theme="dark"] .au-status.delivered,
+html[data-theme="dark"] .au-status.paid,
+html[data-theme="dark"] .au-status.approved {
+  background: #122a20;
+  color: #86efac;
+}
+html[data-theme="dark"] .au-status.cancelled,
+html[data-theme="dark"] .au-status.failed,
+html[data-theme="dark"] .au-status.refunded,
+html[data-theme="dark"] .au-status.rejected {
+  background: #331516;
+  color: #fca5a5;
+}
+html[data-theme="dark"] .au-status.returned {
+  background: #33220f;
+  color: #fdba74;
+}
+html[data-theme="dark"] .au-best {
+  background: #122a20;
+  color: #86efac;
+}
+html[data-theme="dark"] .au-pay.paid {
+  background: #122a20;
+  color: #86efac;
+  border-color: #1e4d38;
+}
+html[data-theme="dark"] .au-crop-state {
+  background: #122a20;
+  border-color: #1e4d38;
+  color: #86efac;
+}
+html[data-theme="dark"] .au-crop-state.is-error {
+  background: #331516;
+  border-color: #5c2224;
+  color: #fca5a5;
+}
+html[data-theme="dark"] .au-panel-remove .btn-icon:hover {
+  background: #331516;
+  border-color: #5c2224;
+  color: var(--au-danger);
+}
+
+/* ---------------------------------------------------------------------
+   5. Native controls, selection, scrollbars
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] {
+  accent-color: var(--au-primary);
+  scrollbar-color: #4a423b #141110;
+}
+html[data-theme="dark"] ::selection {
+  background: rgba(229, 64, 78, .35);
+}
+
+/* ---------------------------------------------------------------------
+   6. Theme toggle affordance + crossfade
+   --------------------------------------------------------------------- */
+.au-action-theme i {
+  transition: transform .35s ease;
+}
+.au-action-theme:hover i {
+  transform: rotate(-14deg) scale(1.08);
+}
+.au-action-theme[aria-pressed="true"] {
+  color: var(--au-primary);
+}
+
+/* Applied briefly by theme.js while the palette swaps */
+html.au-theme-anim *,
+html.au-theme-anim *::before,
+html.au-theme-anim *::after {
+  transition: background-color .25s ease, border-color .25s ease,
+              color .25s ease, fill .25s ease !important;
+}
+
+/* ---------------------------------------------------------------------
+   7. Management portal (mg-*) — loaded after management.css
+   --------------------------------------------------------------------- */
+html[data-theme="dark"] {
+  --mg-ink: #f0e8e2;
+  --mg-muted: #a89b93;
+  --mg-line: #3a322c;
+  --mg-bg: #141110;
+  --mg-accent: #e5404e;
+  --mg-accent-strong: #c2202e;
+  --mg-wine: #a31624;
+  --mg-wine-dark: #7d1019;
+  --mg-wine-light: #c2202e;
+  --mg-sand: #d8c49f;
+  --mg-sand-deep: #b99f74;
+  --mg-cream: #f5efe1;
+  --mg-steel: #8fb0c6;
+}
+
+html[data-theme="dark"] body.mg-body {
+  background: var(--mg-bg);
+  color: var(--mg-ink);
+  --bs-primary: #c2202e;
+  --bs-primary-rgb: 194, 32, 46;
+  --bs-primary-bg-subtle: #241f1c;
+  --bs-link-color: #e5404e;
+  --bs-link-hover-color: #ff8085;
+  scrollbar-color: #4a423b #141110;
+}
+html[data-theme="dark"] body.mg-body::-webkit-scrollbar-thumb {
+  background: #4a423b;
+  border: 2px solid var(--mg-bg);
+  background-clip: padding-box;
+}
+html[data-theme="dark"] body.mg-body::-webkit-scrollbar-thumb:hover {
+  background: #5f554e;
+  border: 2px solid var(--mg-bg);
+  background-clip: padding-box;
+}
+
+/* Topbar / search / icon buttons */
+html[data-theme="dark"] .mg-topbar {
+  background: #1e1a17;
+  border-bottom-color: var(--mg-line);
+}
+html[data-theme="dark"] .mg-topbar .mg-search input {
+  background: #241f1c;
+  color: var(--mg-ink);
+  border-color: var(--mg-line);
+}
+html[data-theme="dark"] .mg-topbar .mg-search input:focus {
+  background: #241f1c;
+  border-color: var(--mg-accent);
+}
+html[data-theme="dark"] .mg-icon-btn {
+  background: #241f1c;
+  color: var(--mg-muted);
+  border-color: var(--mg-line);
+}
+html[data-theme="dark"] .mg-icon-btn:hover {
+  color: #ff8085;
+  border-color: var(--mg-accent);
+}
+html[data-theme="dark"] .mg-icon-btn .dot { border-color: #1e1a17; }
+html[data-theme="dark"] .mg-icon-btn[data-theme-toggle][aria-pressed="true"] {
+  color: var(--mg-accent);
+  border-color: var(--mg-accent);
+}
+html[data-theme="dark"] .mg-icon-btn[data-theme-toggle] i {
+  transition: transform .35s ease;
+}
+html[data-theme="dark"] .mg-icon-btn[data-theme-toggle]:hover i {
+  transform: rotate(-14deg) scale(1.08);
+}
+html[data-theme="dark"] .mg-topbar .mg-lang .au-lang {
+  background: #241f1c;
+  border-color: var(--mg-line);
+  color: var(--mg-ink);
+}
+
+/* Cards */
+html[data-theme="dark"] .mg-card {
+  background: #1e1a17;
+  border-color: var(--mg-line);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}
+html[data-theme="dark"] .mg-card .mg-card-head { border-bottom-color: var(--mg-line); }
+
+/* Tables */
+html[data-theme="dark"] .mg-table th {
+  background: #241f1c;
+  border-bottom-color: var(--mg-line);
+  color: var(--mg-muted);
+}
+html[data-theme="dark"] .mg-table td {
+  border-bottom-color: #2f2823;
+  color: var(--mg-body, #d5cac1);
+}
+html[data-theme="dark"] .mg-table tbody tr:hover { background: #241f1c; }
+html[data-theme="dark"] .mg-table a { color: var(--mg-ink); }
+html[data-theme="dark"] .mg-table a:hover { color: #ff8085; }
+
+/* Chips & badges (pastel → dark-tinted) */
+html[data-theme="dark"] .mg-chip.paid,
+html[data-theme="dark"] .mg-chip.delivered,
+html[data-theme="dark"] .mg-chip.approved,
+html[data-theme="dark"] .mg-chip.in { background: #122a20; color: #86efac; }
+html[data-theme="dark"] .mg-chip.pending,
+html[data-theme="dark"] .mg-chip.confirmed,
+html[data-theme="dark"] .mg-chip.processing { background: #3a2e14; color: #fcd34d; }
+html[data-theme="dark"] .mg-chip.shipped,
+html[data-theme="dark"] .mg-chip.packed,
+html[data-theme="dark"] .mg-chip.out_for_delivery { background: #17263a; color: #93c5fd; }
+html[data-theme="dark"] .mg-chip.cancelled,
+html[data-theme="dark"] .mg-chip.refunded,
+html[data-theme="dark"] .mg-chip.returned,
+html[data-theme="dark"] .mg-chip.rejected,
+html[data-theme="dark"] .mg-chip.failed,
+html[data-theme="dark"] .mg-chip.out { background: #331516; color: #fca5a5; }
+html[data-theme="dark"] .mg-chip.low { background: #33220f; color: #fdba74; }
+html[data-theme="dark"] .mg-chip.neutral { background: #3a3327; color: var(--mg-sand); }
+html[data-theme="dark"] .mg-badge-warn { background: #3a2e14; color: #fcd34d; }
+
+/* Buttons */
+html[data-theme="dark"] .mg-btn-primary {
+  background: #a31624;
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .9);
+}
+html[data-theme="dark"] .mg-btn-primary:hover { background: #c2202e; color: #fff; }
+html[data-theme="dark"] .mg-btn-ghost {
+  background: #241f1c;
+  color: var(--mg-ink);
+  border-color: var(--mg-line);
+}
+html[data-theme="dark"] .mg-btn-ghost:hover {
+  border-color: var(--mg-accent);
+  color: #ff8085;
+}
+html[data-theme="dark"] .mg-btn-danger {
+  background: #241f1c;
+  color: var(--mg-danger, #ff8085);
+  border-color: #5c2224;
+}
+html[data-theme="dark"] .mg-btn-danger:hover {
+  background: #b91c1c;
+  color: #fff;
+  border-color: #b91c1c;
+}
+
+/* Section tabs */
+html[data-theme="dark"] .mg-tab { color: var(--mg-muted); }
+html[data-theme="dark"] .mg-tab:hover { background: #241f1c; color: #ff8085; }
+html[data-theme="dark"] .mg-tab.active {
+  background: linear-gradient(135deg, #a31624, #c2202e);
+  color: #fff;
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .9);
+}
+
+/* Forms */
+html[data-theme="dark"] .mg-field input,
+html[data-theme="dark"] .mg-field select,
+html[data-theme="dark"] .mg-field textarea {
+  background: #241f1c;
+  color: var(--mg-ink);
+  border-color: var(--mg-line);
+}
+html[data-theme="dark"] .mg-field input:focus,
+html[data-theme="dark"] .mg-field select:focus,
+html[data-theme="dark"] .mg-field textarea:focus {
+  background: #241f1c;
+  color: var(--mg-ink);
+  border-color: var(--mg-accent);
+  box-shadow: 0 0 0 3px rgba(229, 64, 78, .18);
+}
+html[data-theme="dark"] .mg-field .errorlist { color: #ff8085; }
+html[data-theme="dark"] .mg-field .helptext { color: var(--mg-muted); }
+
+/* Filter bar */
+html[data-theme="dark"] .mg-filterbar .mg-search-inline input,
+html[data-theme="dark"] .mg-filterbar select {
+  background: #241f1c;
+  color: var(--mg-ink);
+  border-color: var(--mg-line);
+}
+
+/* Misc */
+html[data-theme="dark"] .mg-empty i { color: #6a5f58; }
+html[data-theme="dark"] .mg-timeline li::after { background: var(--mg-line); }
+html[data-theme="dark"] .mg-nav a.active {
+  color: #47060b;
+  background: linear-gradient(90deg, #d8c49f, #8fb0c6);
+}
+
+/* Logo marquee: grey logos need a touch more presence on the dark page. */
+html[data-theme="dark"] .au-marquee-logo {
+  filter: grayscale(1) brightness(1.35);
+  opacity: .6;
+}
+html[data-theme="dark"] .au-marquee-item:hover .au-marquee-logo {
+  filter: grayscale(0);
+  opacity: 1;
+}
+html[data-theme="dark"] .au-marquee-title {
+  color: var(--au-muted);
+}
+

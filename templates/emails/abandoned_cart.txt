@@ -1,0 +1,19 @@
+{% load i18n core_tags %}
+{% trans "You left something in your cart" %} – {{ SITE_NAME }}
+
+Hi {{ email|default:"there" }},
+
+You left some items in your cart at {{ SITE_NAME }}. We've saved them for you:
+
+{% for item in items %}
+- {{ item.name }} × {{ item.quantity }} – {{ item.price|currency }}
+{% endfor %}
+
+Subtotal: {{ subtotal|currency }}
+
+Complete your order now: {{ recovery_url }}
+
+If you have any questions, reply to this email or contact us at {{ SUPPORT_EMAIL }}.
+
+Thanks,
+The {{ SITE_NAME }} team

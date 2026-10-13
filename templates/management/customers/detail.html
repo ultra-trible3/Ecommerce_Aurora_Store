@@ -1,0 +1,131 @@
+{% extends "management/base.html" %}
+{% load i18n %}
+{% load core_tags %}
+
+{% block title %}{{ customer.email }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+  <div>
+    <a class="text-muted text-decoration-none" style="font-size:13px" href="{% url 'dashboard:customers' %}"><i class="bi bi-arrow-left"></i> {% trans "Customers" %}</a>
+    <h1 class="mg-title mt-1">{{ customer.get_full_name|default:customer.username }}</h1>
+    <p class="mg-sub mb-0">{{ customer.email }} · {% blocktrans with joined=customer.date_joined|date:"F j, Y" %}joined {{ joined }}{% endblocktrans %}</p>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if perms.accounts.change_user %}
+      <a class="mg-btn mg-btn-ghost" href="{% url 'dashboard:customer_edit' customer.pk %}">
+        <i class="bi bi-pencil"></i> {% trans "Edit" %}
+      </a>
+    {% endif %}
+    {% if perms.accounts.delete_user and not customer.is_staff %}
+      <form method="post" action="{% url 'dashboard:customer_delete' customer.pk %}"
+            data-confirm="{% blocktrans with email=customer.email %}Permanently delete {{ email }}? Their orders will be kept, but reviews, addresses and notifications are removed.{% endblocktrans %}">
+        {% csrf_token %}
+        <button class="mg-btn mg-btn-ghost text-danger" type="submit">
+          <i class="bi bi-trash"></i> {% trans "Delete" %}
+        </button>
+      </form>
+    {% endif %}
+    <form method="post" action="{% url 'dashboard:customer_toggle' customer.pk %}"
+          data-confirm="{% blocktrans with email=customer.email %}Toggle access for {{ email }}?{% endblocktrans %}">
+      {% csrf_token %}
+      <button class="mg-btn {% if customer.is_active %}mg-btn-danger{% else %}mg-btn-primary{% endif %}" type="submit">
+        {{ customer.is_active|yesno:"Deactivate,Reactivate" }}
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-4">
+    <div class="mg-card mg-kpi">
+      <div class="kpi-label">{% trans "Orders" %}</div>
+      <div class="kpi-value">{{ order_count }}</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="mg-card mg-kpi">
+      <div class="kpi-label">{% trans "Lifetime spend" %}</div>
+      <div class="kpi-value">{{ spent|currency }}</div>
+    </div>
+  </div>
+  <div class="col-sm-4">
+    <div class="mg-card mg-kpi">
+      <div class="kpi-label">{% trans "Reviews written" %}</div>
+      <div class="kpi-value">{{ reviews|length }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="mg-card mb-3">
+      <div class="mg-card-head"><h5>{% trans "Orders" %}</h5></div>
+      <div class="table-responsive">
+        <table class="mg-table">
+          <thead><tr><th>{% trans "Order" %}</th><th>{% trans "Status" %}</th><th>{% trans "Payment" %}</th><th class="text-end">{% trans "Total" %}</th></tr></thead>
+          <tbody>
+            {% for order in orders %}
+              <tr>
+                <td><a href="{% url 'dashboard:order_detail' order.order_number %}">{{ order.order_number }}</a>
+                  <div class="text-muted" style="font-size:12.5px">{{ order.created_at|date:"M j, Y" }}</div>
+                </td>
+                <td><span class="mg-chip {{ order.status }}">{{ order.get_status_display }}</span></td>
+                <td><span class="mg-chip {% if order.is_paid %}paid{% else %}neutral{% endif %}">{{ order.get_payment_status_display }}</span></td>
+                <td class="text-end fw-bold">{{ order.total|currency }}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4"><div class="mg-empty py-3">{% trans "No orders yet." %}</div></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% if reviews %}
+      <div class="mg-card">
+        <div class="mg-card-head"><h5>{% trans "Reviews" %}</h5></div>
+        <div class="mg-card-body">
+          {% for review in reviews %}
+            <div class="mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}">
+              <b>{{ review.product.name }}</b>
+              <span class="text-warning" style="font-size:12px">★★★★★</span>
+              <span class="mg-chip {% if review.status == 'approved' %}approved{% elif review.status == 'pending' %}pending{% else %}rejected{% endif %}">{{ review.get_status_display }}</span>
+              <p class="mb-0 text-muted" style="font-size:13.5px">{{ review.body|truncatechars:200 }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="mg-card mb-3">
+      <div class="mg-card-head"><h5>{% trans "Account" %}</h5></div>
+      <div class="mg-card-body" style="font-size:14px">
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">{% trans "Email" %}</span><span>{{ customer.email }}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">{% trans "Phone" %}</span><span>{{ customer.phone|default:"—" }}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">{% trans "Username" %}</span><span>{{ customer.username }}</span></div>
+        <div class="d-flex justify-content-between mb-2"><span class="text-muted">{% trans "Verified" %}</span><span>{{ customer.email_verified|yesno:"Yes,No" }}</span></div>
+        <div class="d-flex justify-content-between"><span class="text-muted">{% trans "Last login" %}</span><span>{{ customer.last_login|date:"M j, Y g:i A"|default:"—" }}</span></div>
+      </div>
+    </div>
+
+    <div class="mg-card">
+      <div class="mg-card-head"><h5>{% trans "Addresses" %}</h5></div>
+      <div class="mg-card-body">
+        {% for address in addresses %}
+          <div class="mb-3 {% if not forloop.last %}pb-3 border-bottom{% endif %}" style="font-size:13.5px">
+            <b>{{ address.full_name }}</b>
+            <span class="mg-chip neutral">{{ address.get_address_type_display }}</span>
+            {% if address.is_default %}<span class="mg-chip pending">{% trans "Default" %}</span>{% endif %}
+            <div class="text-muted">{{ address.as_line }}</div>
+          </div>
+        {% empty %}
+          <div class="mg-empty py-3"><i class="bi bi-geo-alt"></i>{% trans "No saved addresses." %}</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

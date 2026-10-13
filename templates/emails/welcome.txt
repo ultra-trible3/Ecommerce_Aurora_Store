@@ -1,0 +1,5 @@
+Welcome to {{ SITE_NAME }}
+
+Hi {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %},
+
+Your account is ready. Start shopping: {{ SITE_URL }}/shop/

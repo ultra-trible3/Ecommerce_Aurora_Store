@@ -1,0 +1,23 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ SITE_NAME }} — {{ order.order_number }}{% endblock %}
+
+{% block content %}
+  <h1>{% trans "Your order is being prepared" %}</h1>
+  <p>{% blocktrans with name=order.shipping_full_name|default:_("there") %}Hi {{ name }},{% endblocktrans %}</p>
+  <p>{% trans "Good news — our warehouse is packing your items right now." %}</p>
+
+  <div class="notice">
+    <b>{% blocktrans with number=order.order_number %}Order {{ number }}{% endblocktrans %}</b> · {{ order.created_at|date:"F j, Y" }}
+  </div>
+
+  {% include "emails/_order_details.html" %}
+
+  <p>
+    <a class="btn" href="{{ SITE_URL }}/orders/{{ order.order_number }}/">{% trans "View your order" %}</a>
+  </p>
+  {% if order.cancel_reason %}
+    <p class="muted">{% blocktrans with reason=order.cancel_reason %}Reason: {{ reason }}{% endblocktrans %}</p>
+  {% endif %}
+{% endblock %}

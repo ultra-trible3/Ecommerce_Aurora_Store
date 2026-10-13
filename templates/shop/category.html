@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load core_tags i18n %}
+
+{% block title %}{{ category.name }}{% if meta_title %} — {{ meta_title }}{% endif %} | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}{{ meta_description|default:category.description|truncatechars:160 }}{% endblock %}
+{% block meta_keywords %}{{ meta_keywords|default:category.name }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="container-xxl">{% include "includes/breadcrumbs.html" %}</div>
+{% endblock %}
+
+{% block content %}
+<section class="au-section pt-2">
+  <div class="container-xxl">
+    {% if category.image or category.description %}
+      <div class="au-card p-4 p-md-5 mb-4 d-flex flex-wrap align-items-center gap-4" style="background:#f5efe1">
+        {% if category.image %}
+          <img src="{{ category.image.url }}" alt="{{ category.name }}"
+               style="width:96px;height:96px;object-fit:cover;border-radius:16px">
+        {% endif %}
+        <div style="flex:1;min-width:260px">
+          <h1 class="h3 mb-1">{{ category.name }}</h1>
+          {% if category.description %}<p class="text-muted mb-0">{{ category.description }}</p>{% endif %}
+        </div>
+      </div>
+    {% else %}
+      <h1 class="h3 mb-3">{{ category.name }}</h1>
+    {% endif %}
+
+    {% if children %}
+      <div class="d-flex gap-2 flex-wrap mb-4">
+        {% for child in children %}
+          <a href="{{ child.get_absolute_url }}" class="au-chip text-decoration-none">{{ child.name }}</a>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div class="row g-4">
+      <div class="col-lg-3">
+        {% include "includes/shop_filters.html" %}
+      </div>
+      <div class="col-lg-9">
+        {% include "includes/shop_toolbar.html" %}
+        {% if products %}
+          <div class="row g-3 g-md-4 mt-2">
+            {% for product in products %}
+              <div class="col-6 col-md-4">
+                {% include "includes/product_card.html" with product=product %}
+              </div>
+            {% endfor %}
+          </div>
+          <div class="mt-4">{% include "includes/pagination.html" with page_obj=page_obj %}</div>
+        {% else %}
+          {% trans "No products in this category yet" as empty_title %}
+          {% trans "We are still stocking this shelf. Check back soon or browse everything." as empty_text %}
+          {% trans "Browse all products" as empty_action %}
+          {% include "includes/empty_state.html" with icon="bi-box-seam" title=empty_title text=empty_text action_url="/shop/" action_label=empty_action %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
